@@ -27,6 +27,7 @@ application {
 
 repositories {
     mavenCentral()
+
 }
 
 dependencies {
@@ -98,11 +99,16 @@ tasks.withType(Checkstyle) {
 ext {
     junitVersion = '5.11.0'
     assertjVersion = '3.26.3'
+    lombokVersion = '1.18.40'
 }
 
 dependencies {
     testImplementation "org.junit.jupiter:junit-jupiter:${junitVersion}"
     testImplementation "org.assertj:assertj-core:${assertjVersion}"
+    compileOnly "org.projectlombok:lombok:${lombokVersion}"
+    annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+    testCompileOnly "org.projectlombok:lombok:${lombokVersion}"
+    testAnnotationProcessor "org.projectlombok:lombok:${lombokVersion}"
 }
 
 test {
