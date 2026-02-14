@@ -3,6 +3,8 @@ package ru.mentee.power.crm.storage;
 import org.junit.jupiter.api.Test;
 import ru.mentee.power.crm.domain.Lead;
 
+import java.util.UUID;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatCode;
@@ -11,7 +13,7 @@ class LeadStorageTest {
     @Test
     void shouldAddLeadWhenLeadIsUnique() {
         LeadStorage storage = new LeadStorage();
-        Lead uniqueLead = new Lead("1", "ivan@mail.ru", "+7123", "TechCorp", "NEW");
+        Lead uniqueLead = new Lead(UUID.randomUUID(), "ivan@mail.ru", "+7123", "TechCorp", "NEW");
 
 
         boolean added = storage.add(uniqueLead);
@@ -24,8 +26,8 @@ class LeadStorageTest {
     @Test
     void shouldRejectDuplicateWhenEmailAlreadyExists() {
         LeadStorage storage = new LeadStorage();
-        Lead existingLead = new Lead("1", "ivan@mail.ru", "+7123", "TechCorp", "NEW");
-        Lead duplicateLead = new Lead("2", "ivan@mail.ru", "+7456", "Other", "NEW");
+        Lead existingLead = new Lead(UUID.randomUUID(), "ivan@mail.ru", "+7123", "TechCorp", "NEW");
+        Lead duplicateLead = new Lead(UUID.randomUUID(), "ivan@mail.ru", "+7456", "Other", "NEW");
         storage.add(existingLead);
 
         boolean added = storage.add(duplicateLead);
@@ -39,9 +41,9 @@ class LeadStorageTest {
     void shouldThrowExceptionWhenStorageIsFull() {
         LeadStorage storage = new LeadStorage();
         for (int index = 0; index < 100; index++) {
-            storage.add(new Lead(String.valueOf(index), "lead" + index + "@mail.ru", "+7000", "Company", "NEW"));
+            storage.add(new Lead(UUID.randomUUID(), "lead" + index + "@mail.ru", "+7000", "Company", "NEW"));
         }
-        Lead hundredFirstLead = new Lead("101", "lead101@mail.ru", "+7001", "Company", "NEW");
+        Lead hundredFirstLead = new Lead(UUID.randomUUID(), "lead101@mail.ru", "+7001", "Company", "NEW");
 
         assertThatThrownBy(() -> storage.add(hundredFirstLead))
                 .isInstanceOf(IllegalStateException.class)
@@ -51,8 +53,8 @@ class LeadStorageTest {
     @Test
     void shouldReturnOnlyAddedLeadsWhenFindAllCalled() {
         LeadStorage storage = new LeadStorage();
-        Lead firstLead = new Lead("1", "ivan@mail.ru", "+7123", "TechCorp", "NEW");
-        Lead secondLead = new Lead("2", "maria@startup.io", "+7456", "StartupLab", "NEW");
+        Lead firstLead = new Lead(UUID.randomUUID(), "ivan@mail.ru", "+7123", "TechCorp", "NEW");
+        Lead secondLead = new Lead(UUID.randomUUID(), "maria@startup.io", "+7456", "StartupLab", "NEW");
         storage.add(firstLead);
         storage.add(secondLead);
 
@@ -65,8 +67,8 @@ class LeadStorageTest {
     void shouldNotAddDuplicateLeadWithNullEmail() {
         // Arrange
         LeadStorage storage = new LeadStorage();
-        Lead leadWithNullEmail1 = new Lead("1", null, "+7000", "Company", "NEW");
-        Lead leadWithNullEmail2 = new Lead("2", null, "+7001", "Company", "NEW");
+        Lead leadWithNullEmail1 = new Lead(UUID.randomUUID(), null, "+7000", "Company", "NEW");
+        Lead leadWithNullEmail2 = new Lead(UUID.randomUUID(), null, "+7001", "Company", "NEW");
 
         // Act
         boolean firstAddition = storage.add(leadWithNullEmail1);
@@ -82,9 +84,9 @@ class LeadStorageTest {
     void shouldHandleLeadsWithNullAndNonNullEmail() {
         // Arrange
         LeadStorage storage = new LeadStorage();
-        Lead leadWithNullEmail = new Lead("1", null, "+7000", "Company", "NEW");
-        Lead leadWithEmail = new Lead("2", "test@mail.ru", "+7001", "Company", "NEW");
-        Lead anotherLeadWithNullEmail = new Lead("3", null, "+7002", "Company", "NEW");
+        Lead leadWithNullEmail = new Lead(UUID.randomUUID(), null, "+7000", "Company", "NEW");
+        Lead leadWithEmail = new Lead(UUID.randomUUID(), "test@mail.ru", "+7001", "Company", "NEW");
+        Lead anotherLeadWithNullEmail = new Lead(UUID.randomUUID(), null, "+7002", "Company", "NEW");
 
         // Act
         boolean addNull1 = storage.add(leadWithNullEmail);
@@ -102,7 +104,7 @@ class LeadStorageTest {
     void shouldNotThrowNPEWhenAddingLeadWithNullEmail() {
         // Arrange
         LeadStorage storage = new LeadStorage();
-        Lead leadWithNullEmail = new Lead("1", null, "+7000", "Company", "NEW");
+        Lead leadWithNullEmail = new Lead(UUID.randomUUID(), null, "+7000", "Company", "NEW");
 
         // Act & Assert
         assertThatCode(() -> storage.add(leadWithNullEmail))
@@ -113,10 +115,10 @@ class LeadStorageTest {
     void shouldTreatTwoNullEmailsAsDuplicates() {
         // Arrange
         LeadStorage storage = new LeadStorage();
-        Lead lead1 = new Lead("1", null, "+7000", "Company", "NEW");
-        Lead lead2 = new Lead("2", null, "+7001", "Company", "NEW");
-        Lead lead3 = new Lead("3", "test@mail.ru", "+7002", "Company", "NEW");
-        Lead lead4 = new Lead("4", null, "+7003", "Company", "NEW");
+        Lead lead1 = new Lead(UUID.randomUUID(), null, "+7000", "Company", "NEW");
+        Lead lead2 = new Lead(UUID.randomUUID(), null, "+7001", "Company", "NEW");
+        Lead lead3 = new Lead(UUID.randomUUID(), "test@mail.ru", "+7002", "Company", "NEW");
+        Lead lead4 = new Lead(UUID.randomUUID(), null, "+7003", "Company", "NEW");
 
         // Act
         storage.add(lead1);  // null email

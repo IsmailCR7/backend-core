@@ -1,4 +1,6 @@
 package ru.mentee.power.crm.domain;
 
-public class Contact {
+
+record Contact(String firstName, String lastName, String email){
+
 }

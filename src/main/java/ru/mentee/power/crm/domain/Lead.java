@@ -1,9 +1,10 @@
 package ru.mentee.power.crm.domain;
 
 import java.util.Objects;
+import java.util.UUID;
 
 public class Lead {
-    private String id;
+    private UUID id;
 
     @Override
     public boolean equals(Object o) {
@@ -24,14 +25,14 @@ public class Lead {
     private String company;
     private String status;
 
-    public Lead(String id, String email, String phone, String company, String status){
+    public Lead(UUID id, String email, String phone, String company, String status){
         this.id = id;
         this.email = email;
         this.phone = phone;
         this.company = company;
         this.status = status;
     }
-    public String getId(){
+    public UUID getId(){
         return id;
     }
     public String getEmail(){
