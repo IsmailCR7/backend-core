@@ -10,7 +10,7 @@ public class LeadStorage {
     public boolean add(Lead lead) {
         for (int index = 0; index < leads.length; index++) {
             if (leads[index] != null &&
-                    Objects.equals(leads[index].getEmail(), lead.getEmail())) {
+                    Objects.equals(leads[index].contact(), lead.contact())) {
                 return false;
             }
         }
