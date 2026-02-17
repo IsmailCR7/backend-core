@@ -8,25 +8,25 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class AddressTest {
     @Test
     void shouldCreateAddresWhenValidData(){
-        Address addres = new Address("San Francisco", "123 Main St", "94105");
-        assertThat(addres.city()).isEqualTo("San Francisco");
-        assertThat(addres.street()).isEqualTo("123 Main St");
-        assertThat(addres.zip()).isEqualTo("94105");
+        Address address = new Address("San Francisco", "123 Main St", "94105");
+        assertThat(address.city()).isEqualTo("San Francisco");
+        assertThat(address.street()).isEqualTo("123 Main St");
+        assertThat(address.zip()).isEqualTo("94105");
     }
     @Test
     void shouldBeEqualWhenSameData(){
-        Address firstAddres = new Address("San Francisco", "123 Main St", "94105");
-        Address secondAddres = new Address("San Francisco", "123 Main St", "94105");
-        assertThat(firstAddres).isEqualTo(secondAddres);
-        assertThat(firstAddres.hashCode()).isEqualTo(secondAddres.hashCode());
-        assertThat(secondAddres).isEqualTo(firstAddres);
+        Address firstAddress = new Address("San Francisco", "123 Main St", "94105");
+        Address secondAddress = new Address("San Francisco", "123 Main St", "94105");
+        assertThat(firstAddress).isEqualTo(secondAddress);
+        assertThat(firstAddress.hashCode()).isEqualTo(secondAddress.hashCode());
+        assertThat(secondAddress).isEqualTo(firstAddress);
     }
     @Test
     void shouldNotBeEqualWhenDifferentData(){
-        Address firstAddres = new Address("SanFrancisco", "1234 Main St", "941056");
-        Address secondAddres = new Address("San Francisco", "123 Main St", "94105");
-        assertThat(firstAddres).isNotEqualTo(secondAddres);
-        assertThat(secondAddres).isNotEqualTo(firstAddres);
+        Address firstAddress = new Address("SanFrancisco", "1234 Main St", "941056");
+        Address secondAddress = new Address("San Francisco", "123 Main St", "94105");
+        assertThat(firstAddress).isNotEqualTo(secondAddress);
+        assertThat(secondAddress).isNotEqualTo(firstAddress);
     }
     @Test
     void shouldThrowExceptionWhenCityNull(){
