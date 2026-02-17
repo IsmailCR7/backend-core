@@ -29,13 +29,13 @@ class ContactTest {
 
     @Test
     void shouldNotBeEqualWhenDifferentData() {
-        Address address1 = new Address("Saint-Peterburg", "Moskovskaya", "1234");
-        Address address2 = new Address("SaintPeterburg", "Moskovskaya1", "12345");
-        Contact contact1 = new Contact("davidovsmail@mail.ru", "+79992404770", address1);
-        Contact contact2 = new Contact("davidov-smail@mail.ru", "+79992404769", address2);
+        Address addressFirst = new Address("Saint-Peterburg", "Moskovskaya", "1234");
+        Address addressSecond = new Address("SaintPeterburg", "Moskovskaya1", "12345");
+        Contact contactFirst = new Contact("davidovsmail@mail.ru", "+79992404770", addressFirst);
+        Contact contactSecond = new Contact("davidov-smail@mail.ru", "+79992404769", addressSecond);
 
-        assertThat(contact1).isNotEqualTo(contact2);
-        assertThat(contact2).isNotEqualTo(contact1);
+        assertThat(contactFirst).isNotEqualTo(contactSecond);
+        assertThat(contactSecond).isNotEqualTo(contactFirst);
     }
 
     @Test
@@ -131,7 +131,6 @@ class ContactTest {
     void shouldAcceptValidPhoneFormats() {
         Address address = new Address("Saint-Peterburg", "Moskovskaya", "1234");
 
-        // Все эти форматы должны проходить валидацию
         assertThatCode(() -> new Contact("test@mail.ru", "+79992404769", address))
                 .doesNotThrowAnyException();
 
