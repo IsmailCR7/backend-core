@@ -3,7 +3,6 @@ package ru.mentee.power.crm.domain;
 import org.junit.jupiter.api.Test;
 import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatCode;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
 class LeadTest {
@@ -41,19 +40,18 @@ class LeadTest {
 
     @Test
     void shouldBeEqualWhenSameIdButDifferentContact() {
-        Address address1 = new Address("Москва", "Тверская", "101000");
-        Contact contact1 = new Contact("ivan@mail.ru", "+7 999 123-45-67", address1);
+        Address addressFirst = new Address("Москва", "Тверская", "101000");
+        Contact contactFirst = new Contact("ivan@mail.ru", "+7 999 123-45-67", addressFirst);
 
-        Address address2 = new Address("СПб", "Невский", "191186");
-        Contact contact2 = new Contact("petr@mail.ru", "+7 812 123-45-67", address2);
+        Address addressSecond = new Address("СПб", "Невский", "191186");
+        Contact contactSecond = new Contact("petr@mail.ru", "+7 812 123-45-67", addressSecond);
         UUID sameId = UUID.randomUUID();
 
-        Lead lead1 = new Lead(sameId, contact1, "ООО Ромашка", "NEW");
-        Lead lead2 = new Lead(sameId, contact2, "Другая компания", "QUALIFIED");
+        Lead leadFirst = new Lead(sameId, contactFirst, "ООО Ромашка", "NEW");
+        Lead leadSecond = new Lead(sameId, contactSecond, "Другая компания", "QUALIFIED");
 
-        assertThat(lead1).isNotEqualTo(lead2);
-        assertThat(lead1.id()).isEqualTo(lead2.id());
-        assertThat(lead1.id()).isEqualTo(lead2.id());
+        assertThat(leadFirst).isEqualTo(leadSecond);
+        assertThat(leadFirst.id()).isEqualTo(leadSecond.id());
     }
 
     @Test
@@ -69,8 +67,9 @@ class LeadTest {
                 new Contact("petr@mail.ru", "+7 812 123-45-67",
                         new Address("СПб", "Невский", "191186")),
                 "Другая компания", "QUALIFIED");
+
         assertThat(lead1.id()).isEqualTo(lead2.id());
-        assertThat(lead1).isNotEqualTo(lead2);
+        assertThat(lead1).isEqualTo(lead2);
     }
 
     @Test
