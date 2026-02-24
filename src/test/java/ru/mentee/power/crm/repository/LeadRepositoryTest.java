@@ -3,6 +3,8 @@ package ru.mentee.power.crm.repository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ru.mentee.power.crm.model.Lead;
+
+import java.util.ArrayList;
 import java.util.List;
 import static org.assertj.core.api.Assertions.*;
 
@@ -72,5 +74,32 @@ class LeadRepositoryTest {
         Lead found = repository.findById("1");
         assertThat(found.email()).isEqualTo("second@mail.ru");
         assertThat(repository.size()).isEqualTo(1); // размер не увеличился
+    }
+    @Test
+    void shouldCompareMapAndListPerformance() {
+        int count = 1000;
+        for (int i = 0; i < count; i++) {
+            repository.save(new Lead("id-" + i, "email" + i + "@test.com",
+                    "+7" + i, "Company", "NEW"));
+        }
+
+        String targetId = "id-500";
+        long mapStart = System.nanoTime();
+        Lead mapResult = repository.findById(targetId);
+        long mapTime = System.nanoTime() - mapStart;
+
+        List<Lead> list = new ArrayList<>(repository.findAll());
+        long listStart = System.nanoTime();
+        Lead listResult = list.stream()
+                .filter(l -> l.id().equals(targetId))
+                .findFirst()
+                .orElse(null);
+        long listTime = System.nanoTime() - listStart;
+        System.out.println("Map time: " + mapTime + " ns");
+        System.out.println("List time: " + listTime + " ns");
+        System.out.println("Speedup: " + (listTime / mapTime) + "x");
+
+        assertThat(mapResult).isEqualTo(listResult);
+        assertThat(listTime).isGreaterThan(mapTime * 10);
     }
 }
