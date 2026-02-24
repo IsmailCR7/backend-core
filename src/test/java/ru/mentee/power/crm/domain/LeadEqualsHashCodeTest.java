@@ -3,7 +3,6 @@ package ru.mentee.power.crm.domain;
 import org.junit.jupiter.api.Test;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.*;
@@ -12,11 +11,10 @@ class LeadEqualsHashCodeTest {
 
     @Test
     void shouldBeReflexiveWhenEqualsCalledOnSameObject() {
-        // Given
+
         Lead lead = new Lead(UUID.randomUUID(),new Contact("ivan@mail.ru", "+7 999 123-45-67",
                 new Address("Москва", "Тверская", "101000")), "TechCorp", "NEW");
 
-        // Then: Объект равен сам себе (isEqualTo использует equals() внутри)
         assertThat(lead).isEqualTo(lead);
     }
 

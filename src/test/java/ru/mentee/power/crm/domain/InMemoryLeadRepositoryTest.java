@@ -56,22 +56,18 @@ class InMemoryLeadRepositoryTest {
 
     @Test
     void givenRepositoryWithLeadWhenAddingDuplicateThenSizeRemainsOne() {
-        // Given
         Lead firstLead = testLead;
         repository.add(firstLead);
 
-        // When
         Lead duplicateLead = new Lead(firstLead.id(), firstLead.contact(),
                 firstLead.company(), firstLead.status());
         repository.add(duplicateLead);
 
-        // Then
         assertThat(repository.findAll()).hasSize(1);
     }
 
     @Test
     void givenRepositoryWith5LeadsWhenRemoveExistingLeadThenSizeBecomes4() {
-        // Given
         List<Lead> leads = new ArrayList<>();
         for (int i = 1; i <= 5; i++) {
             Address address = new Address("Saint-Peterburg", "Moskovskaya", "1234");
@@ -83,24 +79,19 @@ class InMemoryLeadRepositoryTest {
 
         UUID uuidToRemove = leads.get(0).id();
 
-        // When
         repository.remove(uuidToRemove);
 
-        // Then
         assertThat(repository.findAll()).hasSize(4);
         assertThat(repository.findById(uuidToRemove)).isEmpty();
     }
 
     @Test
     void givenRepositoryWithLeadsWhenClientModifiesFindAllResultThenInternalStorageUnaffected() {
-        // Given
         repository.add(testLead);
 
-        // When
         List<Lead> externalList = repository.findAll();
-        externalList.clear(); // Пытаемся очистить полученный список
+        externalList.clear();
 
-        // Then
         assertThat(repository.findAll()).isNotEmpty().hasSize(1);
         assertThat(repository.findById(testLead.id())).isPresent();
     }

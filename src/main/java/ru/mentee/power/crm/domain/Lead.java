@@ -19,4 +19,16 @@ public record Lead(UUID id, Contact contact, String company, String status) {
         }
 
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Lead lead)) return false;
+        return Objects.equals(id, lead.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(id);
+    }
 }
