@@ -128,3 +128,4 @@ open http://localhost:63342/backend-core/build/reports/jacoco/test/html/index.ht
 ```
 ```
 ## Добавили зависимости Lombok
+## BCORE-8
