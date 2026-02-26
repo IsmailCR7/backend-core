@@ -1,87 +1,42 @@
 package ru.mentee.power.crm.model;
 
-import org.junit.jupiter.api.Test;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.HashSet;
-import java.util.Set;
-
 import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.*;
+
+import org.junit.jupiter.api.Test;
 
 class LeadTest {
 
     @Test
-    void shouldBeEqualWhenSameId() {
-        Lead lead1 = new Lead("123", "ivan@mail.ru", "+7123456", "Company A", "NEW");
-        Lead lead2 = new Lead("123", "petr@mail.ru", "+7987654", "Company B", "HOT");
+    void shouldCreateContactWhenValidData() {
+        // When
+        UUID id = UUID.randomUUID();
+        Lead lead = new Lead(id, "example@gmail.com", "TechCorp", LeadStatus.NEW);
 
-        assertThat(lead1).isEqualTo(lead2);
+        // Then
+        assertThat(lead.id()).isEqualTo(id);
+        assertThat(lead.email()).isEqualTo("example@gmail.com");
+        assertThat(lead.company()).isEqualTo("TechCorp");
+        assertThat(lead.status()).isEqualTo(LeadStatus.NEW);
     }
 
     @Test
-    void shouldNotBeEqualWhenDifferentId() {
-        Lead lead1 = new Lead("123", "ivan@mail.ru", "+7123456", "Company A", "NEW");
-        Lead lead2 = new Lead("456", "ivan@mail.ru", "+7123456", "Company A", "NEW");
-        assertThat(lead1).isNotEqualTo(lead2);
+    void shouldBeEqualWhenSameData() {
+        UUID id = UUID.randomUUID();
+        Lead firstLead = new Lead(id, "example@gmail.com", "TechCorp", LeadStatus.NEW);
+        Lead secondLead = new Lead(id, "example@gmail.com", "TechCorp", LeadStatus.NEW);
+
+        assertThat(firstLead.equals(secondLead)).isTrue();
+        assertThat(firstLead.hashCode()).isEqualTo(secondLead.hashCode());
     }
 
     @Test
-    void shouldHaveSameHashCodeWhenSameId() {
-        Lead lead1 = new Lead("123", "ivan@mail.ru", "+7123456", "Company A", "NEW");
-        Lead lead2 = new Lead("123", "petr@mail.ru", "+7987654", "Company B", "HOT");
-        assertThat(lead1.hashCode()).isEqualTo(lead2.hashCode());
-    }
+    void shouldNotBeEqualWhenDifferentData() {
+        UUID id = UUID.randomUUID();
+        Lead firstLead = new Lead("example@gmail.com", "TechCorp", LeadStatus.NEW);
+        Lead secondLead = new Lead("example@gmail.com", "AnotherCorp", LeadStatus.CONTACTED);
 
-    @Test
-    void shouldWorkAsKeyInHashMapWhenUsingId() {
-        Lead lead1 = new Lead("123", "ivan@mail.ru", "+7123456", "Company A", "NEW");
-        Lead lead2 = new Lead("123", "petr@mail.ru", "+7987654", "Company B", "HOT");
-
-        Map<Lead, String> leadMap = new HashMap<>();
-        leadMap.put(lead1, "Информация о лиде");
-        assertThat(leadMap.get(lead2)).isEqualTo("Информация о лиде");
-        assertThat(leadMap.size()).isEqualTo(1);
-    }
-
-    @Test
-    void shouldWorkInHashSetWhenUsingId() {
-        Lead lead1 = new Lead("123", "ivan@mail.ru", "+7123456", "Company A", "NEW");
-        Lead lead2 = new Lead("123", "petr@mail.ru", "+7987654", "Company B", "HOT");
-
-        Set<Lead> leadSet = new HashSet<>();
-        leadSet.add(lead1);
-        leadSet.add(lead2);
-
-        assertThat(leadSet).hasSize(1);
-        assertThat(leadSet).containsExactly(lead1);
-    }
-
-    @Test
-    void shouldPreserveAllFieldsWhenCreated() {
-        Lead lead = new Lead(
-                "123",
-                "test@mail.ru",
-                "+79991234567",
-                "ООО Ромашка",
-                "NEW"
-        );
-        assertThat(lead.id()).isEqualTo("123");
-        assertThat(lead.email()).isEqualTo("test@mail.ru");
-        assertThat(lead.phone()).isEqualTo("+79991234567");
-        assertThat(lead.company()).isEqualTo("ООО Ромашка");
-        assertThat(lead.status()).isEqualTo("NEW");
-    }
-
-    @Test
-    void shouldHaveCorrectToString() {
-        Lead lead = new Lead("123", "test@mail.ru", "+7123", "Company", "NEW");
-        String toString = lead.toString();
-
-        assertThat(toString)
-                .contains("123")
-                .contains("test@mail.ru")
-                .contains("+7123")
-                .contains("Company")
-                .contains("NEW");
+        assertThat(firstLead.equals(secondLead)).isFalse();
     }
 }
