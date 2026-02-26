@@ -1,29 +1,18 @@
 package ru.mentee.power.crm.repository;
 
+import java.util.*;
+
 import ru.mentee.power.crm.model.Lead;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+public interface LeadRepository {
 
+    Lead save(Lead lead);
 
-public class LeadRepository {
-    private final Map<String, Lead> storage = new HashMap<>();
-    public void save(Lead lead) {
-        storage.put(lead.id(), lead);
-    }
-    public Lead findById(String id) {
-        return storage.get(id);
-    }
-    public List<Lead> findAll() {
-        return new ArrayList<>(storage.values());
-    }
-    public void delete(String id){
-        storage.remove(id);
-    }
-    public int size() {
-        return storage.size();
+    Optional<Lead> findById(UUID id);
 
-    }
+    Optional<Lead> findByEmail(String email);
+
+    List<Lead> findAll();
+
+    void delete(UUID id);
 }
