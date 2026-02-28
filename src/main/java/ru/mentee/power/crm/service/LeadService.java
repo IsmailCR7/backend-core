@@ -15,11 +15,11 @@ public class LeadService {
     private final LeadRepository repository;
 
     public LeadService(LeadRepository repository) {
+
         this.repository = repository;
     }
 
     public Lead addLead(String email, String company, LeadStatus status) {
-        // Бизнес-правило: проверка уникальности email
         Optional<Lead> existing = repository.findByEmail(email);
         if (existing.isPresent()) {
             throw new IllegalStateException("Lead with email already exists: " + email);

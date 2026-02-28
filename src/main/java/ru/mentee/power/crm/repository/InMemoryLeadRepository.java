@@ -18,6 +18,7 @@ public class InMemoryLeadRepository implements LeadRepository {
 
     @Override
     public Optional<Lead> findById(UUID id) {
+
         return Optional.ofNullable(storage.get(id));
     }
 
