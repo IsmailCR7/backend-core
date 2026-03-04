@@ -69,10 +69,8 @@ class LeadListServletTest {
         when(servletContext.getAttribute("leadService")).thenReturn(leadService);
         when(leadService.findAll()).thenReturn(testLeads);
 
-        // Выполняем метод
         servlet.doGet(request, response);
 
-        // Проверяем, что установлен правильный Content-Type
         verify(response).setContentType("text/html; charset=UTF-8");
 
 

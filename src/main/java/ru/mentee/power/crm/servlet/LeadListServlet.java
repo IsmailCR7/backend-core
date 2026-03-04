@@ -12,60 +12,24 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
 
-
 @WebServlet("/leads")
-public class LeadListServlet  extends HttpServlet {
+public class LeadListServlet extends HttpServlet {
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException {
+            throws ServletException, IOException {
+
         LeadService leadService = (LeadService) getServletContext().getAttribute("leadService");
         List<Lead> leads = leadService.findAll();
-        System.out.println("Найдено лидов: "+leads.size());
+        System.out.println("Найдено лидов: " + leads.size());
+
         response.setContentType("text/html; charset=UTF-8");
         PrintWriter writer = response.getWriter();
 
-        writer.println("<!DOCTYPE html>");
-        writer.println("<html>");
-        writer.println("<head>");
-        writer.println("    <title>Lead List</title>");
-        writer.println("    <style>");
-        writer.println("        table { border-collapse: collapse; width: 100%; }");
-        writer.println("        th, td { border: 1px solid black; padding: 8px; text-align: left; }");
-        writer.println("        th { background-color: #f2f2f2; }");
-        writer.println("    </style>");
-        writer.println("</head>");
-        writer.println("<body>");
-        writer.println("    <h1>Lead List</h1>");
-        writer.println("    <table>");
-        writer.println("        <thead>");
-        writer.println("            <tr>");
-        writer.println("                <th>Email</th>");
-        writer.println("                <th>Company</th>");
-        writer.println("                <th>Status</th>");
-        writer.println("            </tr>");
-        writer.println("        </thead>");
-        writer.println("        <tbody>");
+        generateHtmlTable(writer, leads);
 
-        for (Lead lead : leads) {
-            writer.println("            <tr>");
-            writer.println("                <td>" + lead.email() + "</td>");
-            writer.println("                <td>" + lead.company() + "</td>");
-            writer.println("                <td>" + lead.status() + "</td>");
-            writer.println("            </tr>");
-        }
-
-        writer.println("        </tbody>");
-        writer.println("    </table>");
-        writer.println("</body>");
-        writer.println("</html>");
         System.out.println("✅ Response sent successfully");
         System.out.println("=== End of request ===");
-        generateHtmlTable(writer,leads);
-        System.out.println("Ответ успешно отправлен");
-
-
-
-
     }
 
     private void generateHtmlTable(PrintWriter writer, List<Lead> leads) {
@@ -91,12 +55,12 @@ public class LeadListServlet  extends HttpServlet {
         writer.println("            </tr>");
         writer.println("        </thead>");
         writer.println("        <tbody>");
+
         if (leads.isEmpty()) {
             writer.println("            <tr>");
-            writer.println("                <td colspan='3' style='text-align: " +
-                    "center;'>Нет данных</td>");
+            writer.println("                <td colspan='3' style='text-align: center;'>Нет данных</td>");
             writer.println("            </tr>");
-        }else {
+        } else {
             for (Lead lead : leads) {
                 writer.println("            <tr>");
                 writer.println("                <td>" + escapeHtml(lead.email()) + "</td>");
@@ -104,14 +68,14 @@ public class LeadListServlet  extends HttpServlet {
                 writer.println("                <td>" + escapeHtml(lead.status().toString()) + "</td>");
                 writer.println("            </tr>");
             }
-
         }
+
         writer.println("        </tbody>");
         writer.println("    </table>");
         writer.println("</body>");
         writer.println("</html>");
-
     }
+
     private String escapeHtml(String text) {
         if (text == null) return "";
         return text.replace("&", "&amp;")
