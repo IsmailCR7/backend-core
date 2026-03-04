@@ -101,6 +101,8 @@ ext {
     junitVersion = '5.11.0'
     assertjVersion = '3.26.3'
     lombokVersion = '1.18.40'
+    servletVersion = '6.1.0'
+    tomcatVersion = '11.0.18'
 }
 
 dependencies {
@@ -112,6 +114,8 @@ dependencies {
     testAnnotationProcessor "org.projectlombok:lombok:${lombokVersion}"
     testImplementation 'org.mockito:mockito-core:5.21.0'
     testImplementation 'org.mockito:mockito-junit-jupiter:5.21.0'
+    implementation "jakarta.servlet:jakarta.servlet-api:${servletVersion}"
+    implementation "org.apache.tomcat.embed:tomcat-embed-core:${tomcatVersion}"
 }
 
 test {

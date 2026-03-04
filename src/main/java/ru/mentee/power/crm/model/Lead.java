@@ -36,5 +36,6 @@ public record Lead(
     public int hashCode() {
         return Objects.hash(id, email, company, status);
     }
-};
 
+
+}
