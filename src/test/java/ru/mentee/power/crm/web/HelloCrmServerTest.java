@@ -21,7 +21,6 @@ class HelloCrmServerTest {
     static void setUp() throws Exception {
         server = new HelloCrmServer(TEST_PORT);
         server.start();
-        // Даем серверу время на запуск
         Thread.sleep(1000);
     }
 
@@ -45,7 +44,6 @@ class HelloCrmServerTest {
         String contentType = connection.getContentType();
         assertTrue(contentType.contains("text/html"));
 
-        // Читаем ответ
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(connection.getInputStream()))) {
             String response = reader.lines().collect(Collectors.joining("\n"));
@@ -77,7 +75,6 @@ class HelloCrmServerTest {
 
                         connection.disconnect();
 
-                        // Небольшая задержка между запросами
                         Thread.sleep(50);
                     }
                 } catch (Exception e) {

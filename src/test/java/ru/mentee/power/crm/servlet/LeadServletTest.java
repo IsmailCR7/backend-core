@@ -46,14 +46,11 @@ class LeadListServletTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        // Создаем экземпляр сервлета
         servlet = new LeadListServlet();
 
-        // Настраиваем моки
         when(servletConfig.getServletContext()).thenReturn(servletContext);
         servlet.init(servletConfig);
 
-        // Подготавливаем Writer для захвата вывода
         stringWriter = new StringWriter();
         printWriter = new PrintWriter(stringWriter);
         when(response.getWriter()).thenReturn(printWriter);
@@ -62,14 +59,13 @@ class LeadListServletTest {
     @Test
     @DisplayName("Тест 1: Должен получить LeadService из ServletContext и отобразить лидов")
     void shouldGetLeadServiceAndDisplayLeads() throws Exception {
-        // Подготовка тестовых данных
         List<Lead> testLeads = Arrays.asList(
                 new Lead("ivan@example.com", "ООО Ромашка", LeadStatus.NEW),
                 new Lead("petr@example.com", "ЗАО ТехноСервис", LeadStatus.CONTACTED),
                 new Lead("anna@example.com", "ИП Анна", LeadStatus.QUALIFIED)
         );
 
-        // Настраиваем поведение моков
+
         when(servletContext.getAttribute("leadService")).thenReturn(leadService);
         when(leadService.findAll()).thenReturn(testLeads);
 
@@ -79,24 +75,23 @@ class LeadListServletTest {
         // Проверяем, что установлен правильный Content-Type
         verify(response).setContentType("text/html; charset=UTF-8");
 
-        // Проверяем, что сервис был вызван
+
         verify(leadService).findAll();
 
-        // Получаем сгенерированный HTML
+
         String html = stringWriter.toString();
 
-        // Проверяем, что HTML содержит все необходимые элементы
+
         assertTrue(html.contains("<!DOCTYPE html>"), "Должен быть DOCTYPE");
         assertTrue(html.contains("<title>Lead List</title>"), "Должен быть title");
         assertTrue(html.contains("<h1>Lead List</h1>"), "Должен быть заголовок");
         assertTrue(html.contains("<table>"), "Должна быть таблица");
 
-        // Проверяем заголовки таблицы
         assertTrue(html.contains("<th>Email</th>"), "Должна быть колонка Email");
         assertTrue(html.contains("<th>Company</th>"), "Должна быть колонка Company");
         assertTrue(html.contains("<th>Status</th>"), "Должна быть колонка Status");
 
-        // Проверяем, что все лиды отобразились
+
         assertTrue(html.contains("ivan@example.com"), "Должен быть email Ивана");
         assertTrue(html.contains("ООО Ромашка"), "Должна быть компания Ромашка");
         assertTrue(html.contains("NEW"), "Должен быть статус NEW");
@@ -111,17 +106,13 @@ class LeadListServletTest {
     @Test
     @DisplayName("Тест 2: Должен обработать случай с пустым списком лидов")
     void shouldHandleEmptyLeadList() throws Exception {
-        // Настраиваем пустой список
         when(servletContext.getAttribute("leadService")).thenReturn(leadService);
         when(leadService.findAll()).thenReturn(List.of());
 
-        // Выполняем метод
         servlet.doGet(request, response);
 
-        // Получаем HTML
         String html = stringWriter.toString();
 
-        // Проверяем, что отображается сообщение о пустом списке
         assertTrue(html.contains("Нет данных") || html.contains("colspan='3'"),
                 "Должно быть сообщение об отсутствии данных");
 
@@ -134,16 +125,13 @@ class LeadListServletTest {
     @Test
     @DisplayName("Тест 6: Должен сгенерировать правильную структуру HTML")
     void shouldGenerateCorrectHtmlStructure() throws Exception {
-        // Подготовка
         when(servletContext.getAttribute("leadService")).thenReturn(leadService);
         when(leadService.findAll()).thenReturn(List.of());
 
-        // Выполнение
         servlet.doGet(request, response);
 
         String html = stringWriter.toString();
 
-        // Проверяем структуру HTML
         assertTrue(html.startsWith("<!DOCTYPE html>"),
                 "HTML должен начинаться с DOCTYPE");
         assertTrue(html.contains("<html>"),
@@ -165,16 +153,11 @@ class LeadListServletTest {
     @Test
     @DisplayName("Тест 7: Должен установить правильную кодировку")
     void shouldSetCorrectEncoding() throws Exception {
-        // Подготовка
         when(servletContext.getAttribute("leadService")).thenReturn(leadService);
         when(leadService.findAll()).thenReturn(List.of());
 
-        // Выполнение
         servlet.doGet(request, response);
 
-        // Проверяем, что Content-Type установлен до getWriter
         verify(response).setContentType("text/html; charset=UTF-8");
-
-        System.out.println("✅ Тест 7 пройден: правильная кодировка установлена");
     }
 }
