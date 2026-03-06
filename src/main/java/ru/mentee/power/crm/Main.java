@@ -16,11 +16,14 @@ public class Main {
         System.out.println("=== Launching CRM application ===");
         LeadRepository repository = new InMemoryLeadRepository();
         LeadService leadService = new LeadService(repository);
+
+        leadService.addLead("davidov-ismail@mail.ru", "АК Победа", LeadStatus.QUALIFIED);
         leadService.addLead("ivan@example.com", "ООО Ромашка", LeadStatus.NEW);
         leadService.addLead("petr@example.com", "ЗАО ТехноСервис", LeadStatus.CONTACTED);
         leadService.addLead("anna@example.com", "ИП Анна", LeadStatus.QUALIFIED);
         leadService.addLead("sergey@example.com", "ООО СтройИнвест", LeadStatus.CONTACTED);
         leadService.addLead("elena@example.com", "АО МедиаГрупп", LeadStatus.NEW);
+
         Tomcat tomcat = new Tomcat();
 
         int port = 8080;
