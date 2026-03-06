@@ -10,11 +10,9 @@ class LeadTest {
 
     @Test
     void shouldCreateContactWhenValidData() {
-        // When
         UUID id = UUID.randomUUID();
         Lead lead = new Lead(id, "example@gmail.com", "TechCorp", LeadStatus.NEW);
 
-        // Then
         assertThat(lead.id()).isEqualTo(id);
         assertThat(lead.email()).isEqualTo("example@gmail.com");
         assertThat(lead.company()).isEqualTo("TechCorp");
