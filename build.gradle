@@ -3,11 +3,17 @@ plugins {
     id 'checkstyle'
     id 'java'
     id 'jacoco'
+    id 'org.springframework.boot' version '3.5.7'
+    id 'io.spring.dependency-management' version '1.1.7'
     id 'gg.jte.gradle' version '3.1.15'
 }
 
 group = 'ru.mentee.power'
 version = '1.0-SNAPSHOT'
+
+bootRun {
+    mainClass = "ru.mentee.power.crm.spring.Application"
+}
 
 ext {
     junitVersion = '5.11.0'
@@ -17,6 +23,7 @@ ext {
     tomcatVersion = '11.0.18'
     jteVersion = '3.1.15'
     mockitoVersion = '5.21.0'
+    springBootVersion = '3.5.7'
 }
 
 java {
@@ -25,9 +32,12 @@ java {
     }
 }
 
+
 application {
     mainClass = 'ru.mentee.power.crm.Main'
+
 }
+
 
 repositories {
     mavenCentral()
@@ -37,6 +47,7 @@ dependencies {
     // JTE
     implementation "gg.jte:jte:${jteVersion}"
     implementation "gg.jte:jte-runtime:${jteVersion}"
+    //implementation "gg.jte:jte:${jteVersion}"
 
     // Servlet & Tomcat
     implementation "jakarta.servlet:jakarta.servlet-api:${servletVersion}"
@@ -56,6 +67,9 @@ dependencies {
     testImplementation "org.mockito:mockito-junit-jupiter:${mockitoVersion}"
     testCompileOnly "org.projectlombok:lombok:${lombokVersion}"
     testAnnotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+
+    // Spring Boot Stack (BCORE-14)
+    implementation "org.springframework.boot:spring-boot-starter-web:${springBootVersion}"
 }
 
 jte {
