@@ -130,3 +130,14 @@ open http://localhost:63342/backend-core/build/reports/jacoco/test/html/index.ht
 ## Добавили зависимости Lombok
 ## BCORE-8
 ## BCORE-12
+Сравнение стеков Servlet vs Spring Boot
+Результаты интеграционного теста
+Метрика	Servlet	Spring Boot	Комментарий
+Время старта	679 ms	 2670 ms	Spring загружает IoC контейнер
+HTTP 200 на /leads	✅	✅	Оба работают идентично
+Количество лидов	6	6	Данные одинаковые
+Строк Java кода	~150	~30	Контраст 5:1
+Вывод
+Оба стека возвращают идентичные данные, но Spring Boot требует в 5 раз меньше кода за счёт auto-configuration. Trade-off: Spring стартует медленнее из-за инициализации IoC контейнера.
+
+Данные получены из StackComparisonTest.java

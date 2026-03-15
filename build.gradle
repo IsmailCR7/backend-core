@@ -106,9 +106,9 @@ test {
     useJUnitPlatform()
 }
 
-// Настройка JaCoCo отчёта
+
 jacocoTestReport {
-    dependsOn test  // отчёт генерируется после выполнения тестов
+    dependsOn test
     reports {
         xml.required = false
         csv.required = false
@@ -116,7 +116,7 @@ jacocoTestReport {
         html.outputLocation = layout.buildDirectory.dir('reports/jacoco/test/html')
     }
 
-    // Исключаем Main из отчёта покрытия
+
     afterEvaluate {
         classDirectories.setFrom(files(classDirectories.files.collect { dir ->
             fileTree(dir: dir, exclude: [
@@ -127,7 +127,7 @@ jacocoTestReport {
     }
 }
 
-// Настройка проверки покрытия (минимум 80%)
+
 jacocoTestCoverageVerification {
     dependsOn jacocoTestReport
     violationRules {
@@ -138,7 +138,7 @@ jacocoTestCoverageVerification {
         }
     }
 
-    // Исключаем Main из отчёта покрытия
+
     afterEvaluate {
         classDirectories.setFrom(files(classDirectories.files.collect { dir ->
             fileTree(dir: dir, exclude: [
@@ -149,7 +149,7 @@ jacocoTestCoverageVerification {
     }
 }
 
-// Интеграция проверок в lifecycle
+
 check {
     dependsOn jacocoTestCoverageVerification
 }
