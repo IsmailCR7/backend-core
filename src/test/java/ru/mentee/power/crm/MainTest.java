@@ -44,32 +44,6 @@ class MainTest {
         assertEquals("test@example.com", leadService.findAll().get(0).email());
     }
 
-//    @Test
-//    @DisplayName("Тест : Проверка вывода в консоль")
-//    void shouldOutputCorrectMessages() throws Exception {
-//        Thread mainThread = new Thread(() -> {
-//            try {
-//                Method mainMethod = Main.class.getDeclaredMethod("main", String[].class);
-//                mainMethod.setAccessible(true);
-//
-//                Thread.sleep(100);
-//                mainMethod.invoke(null, (Object) new String[]{});
-//            } catch (Exception e) {
-//
-//            }
-//        });
-//
-//        mainThread.start();
-//        Thread.sleep(500);
-//        mainThread.interrupt();
-//
-//        String output = outputStream.toString();
-//        assertTrue(output.contains("=== Launching CRM application ==="));
-//        assertTrue(output.contains("Configuring Tomcat on the port 8080"));
-//        assertTrue(output.contains("The servlet is registered at: /leads"));
-//    }
-
-
 
     @Test
     @DisplayName("Тест : Проверка корректности URL")
