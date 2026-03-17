@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import ru.mentee.power.crm.model.Lead;
+import ru.mentee.power.crm.model.LeadStatus;
 import ru.mentee.power.crm.service.LeadService;
 
 import java.io.IOException;
@@ -36,15 +37,32 @@ public class LeadListServlet extends HttpServlet {
             throws ServletException, IOException {
 
         LeadService service = (LeadService) getServletContext().getAttribute("leadService");
-        List<Lead> leads = service.findAll();
+
+        String statusParam = request.getParameter("status");
+        LeadStatus status = null;
+
+        if (statusParam != null && !statusParam.isEmpty()) {
+            try {
+                status = LeadStatus.valueOf(statusParam.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                status = null;
+            }
+        }
+
+        List<Lead> leads;
+        if (status == null) {
+            leads = service.findAll();
+        } else {
+            leads = service.findByStatus(status);
+        }
 
         Map<String, Object> model = new HashMap<>();
         model.put("leads", leads);
+        model.put("currentFilter", status);
 
         response.setContentType("text/html; charset=UTF-8");
 
         PrintWriter writer = response.getWriter();
-
         PrintWriterOutput output = new PrintWriterOutput(writer);
 
         templateEngine.render("leads/list.jte", model, output);

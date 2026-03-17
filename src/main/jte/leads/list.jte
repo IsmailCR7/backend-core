@@ -1,8 +1,60 @@
 @param java.util.List<ru.mentee.power.crm.model.Lead> leads
+@param ru.mentee.power.crm.model.LeadStatus currentFilter
 
 @template.layout.main(content = @`
     <div class="bg-white rounded-lg shadow-md p-6">
         <h2 class="text-2xl font-bold mb-4">Список лидов</h2>
+
+        <!-- Панель фильтрации -->
+        <div class="mb-6">
+            <h3 class="text-lg font-semibold mb-2">Фильтр по статусу:</h3>
+            <div class="flex flex-wrap gap-2">
+                <!-- Кнопка "Все" -->
+                <a href="/leads"
+                   class="px-4 py-2 rounded transition-colors inline-block
+                          ${currentFilter == null ?
+                            "bg-blue-600 text-white" :
+                            "bg-gray-200 hover:bg-gray-300"}">
+                    Все
+                </a>
+
+                <!-- Кнопка "NEW" -->
+                <a href="/leads?status=NEW"
+                   class="px-4 py-2 rounded transition-colors inline-block
+                          ${currentFilter != null && currentFilter.toString() == "NEW" ?
+                            "bg-blue-600 text-white" :
+                            "bg-gray-200 hover:bg-gray-300"}">
+                    Новые (NEW)
+                </a>
+
+                <!-- Кнопка "CONTACTED" -->
+                <a href="/leads?status=CONTACTED"
+                   class="px-4 py-2 rounded transition-colors inline-block
+                          ${currentFilter != null && currentFilter.toString() == "CONTACTED" ?
+                            "bg-blue-600 text-white" :
+                            "bg-gray-200 hover:bg-gray-300"}">
+                    В работе (CONTACTED)
+                </a>
+
+                <!-- Кнопка "QUALIFIED" -->
+                <a href="/leads?status=QUALIFIED"
+                   class="px-4 py-2 rounded transition-colors inline-block
+                          ${currentFilter != null && currentFilter.toString() == "QUALIFIED" ?
+                            "bg-blue-600 text-white" :
+                            "bg-gray-200 hover:bg-gray-300"}">
+                    Квалифицированные (QUALIFIED)
+                </a>
+            </div>
+
+            <!-- Информация о текущем фильтре -->
+            @if(currentFilter != null)
+                <p class="mt-4 text-sm text-gray-600 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <span class="font-medium">Активный фильтр:</span>
+                    показаны лиды со статусом
+                    <span class="font-semibold">${currentFilter}</span>
+                </p>
+            @endif
+        </div>
 
         @if(leads.isEmpty())
             <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
