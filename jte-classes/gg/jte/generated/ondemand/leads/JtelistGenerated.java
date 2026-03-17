@@ -2,12 +2,14 @@ package gg.jte.generated.ondemand.leads;
 @SuppressWarnings("unchecked")
 public final class JtelistGenerated {
 	public static final String JTE_NAME = "leads/list.jte";
-	public static final int[] JTE_LINE_INFO = {0,0,0,0,0,3,3,3,3,7,11,14,16,16,16,16,16,20,23,25,25,25,25,25,29,32,34,34,34,34,34,38,41,43,43,43,43,43,48,49,49,53,53,53,55,55,58,58,62,62,72,72,74,74,74,75,75,75,77,77,79,79,79,81,81,83,83,83,85,85,87,87,87,89,89,92,92,95,95,97,97,97,98,98,98,0,1,1,1,1};
+	public static final int[] JTE_LINE_INFO = {0,0,0,0,0,3,3,3,3,5,9,19,23,26,28,28,28,28,28,32,35,37,37,37,37,37,41,44,46,46,46,46,46,50,53,55,55,55,55,55,60,61,61,65,65,65,67,67,70,70,74,74,84,84,86,86,86,87,87,87,89,89,91,91,91,93,93,95,95,95,97,97,99,99,99,101,101,104,104,107,107,109,109,109,109,109,0,1,1,1,1};
 	public static void render(gg.jte.html.HtmlTemplateOutput jteOutput, gg.jte.html.HtmlInterceptor jteHtmlInterceptor, java.util.List<ru.mentee.power.crm.model.Lead> leads, ru.mentee.power.crm.model.LeadStatus currentFilter) {
 		jteOutput.writeContent("\r\n");
 		gg.jte.generated.ondemand.layout.JtemainGenerated.render(jteOutput, jteHtmlInterceptor, new gg.jte.html.HtmlContent() {
 			public void writeTo(gg.jte.html.HtmlTemplateOutput jteOutput) {
-				jteOutput.writeContent("\r\n    <div class=\"bg-white rounded-lg shadow-md p-6\">\r\n        <h2 class=\"text-2xl font-bold mb-4\">Список лидов</h2>\r\n\r\n        ");
+				jteOutput.writeContent("\r\n    <div class=\"bg-white rounded-lg shadow-md p-6\">\r\n        ");
+				jteOutput.writeContent("\r\n        <div class=\"flex justify-between items-center mb-4\">\r\n            <h2 class=\"text-2xl font-bold\">Список лидов</h2>\r\n\r\n            ");
+				jteOutput.writeContent("\r\n            <a href=\"/leads/new\"\r\n               class=\"bg-green-500 hover:bg-green-600 text-white font-medium px-4 py-2 rounded-lg transition-colors duration-200 flex items-center gap-2\">\r\n                <svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-5 w-5\" viewBox=\"0 0 20 20\" fill=\"currentColor\">\r\n                    <path fill-rule=\"evenodd\" d=\"M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z\" clip-rule=\"evenodd\" />\r\n                </svg>\r\n                Добавить лида\r\n            </a>\r\n        </div>\r\n\r\n        ");
 				jteOutput.writeContent("\r\n        <div class=\"mb-6\">\r\n            <h3 class=\"text-lg font-semibold mb-2\">Фильтр по статусу:</h3>\r\n            <div class=\"flex flex-wrap gap-2\">\r\n                ");
 				jteOutput.writeContent("\r\n                <a href=\"/leads\"\r\n                   class=\"px-4 py-2 rounded transition-colors inline-block\r\n                          ");
 				jteOutput.setContext("a", "class");
@@ -80,7 +82,6 @@ public final class JtelistGenerated {
 				jteOutput.writeContent("\r\n    </div>\r\n");
 			}
 		});
-		jteOutput.writeContent("\r\n");
 	}
 	public static void renderMap(gg.jte.html.HtmlTemplateOutput jteOutput, gg.jte.html.HtmlInterceptor jteHtmlInterceptor, java.util.Map<String, Object> params) {
 		java.util.List<ru.mentee.power.crm.model.Lead> leads = (java.util.List<ru.mentee.power.crm.model.Lead>)params.get("leads");

@@ -3,9 +3,21 @@
 
 @template.layout.main(content = @`
     <div class="bg-white rounded-lg shadow-md p-6">
-        <h2 class="text-2xl font-bold mb-4">Список лидов</h2>
+        <!-- Заголовок с кнопкой добавления -->
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-bold">Список лидов</h2>
 
-        <!-- Панель фильтрации -->
+            <!-- НОВАЯ ЗЕЛЕНАЯ КНОПКА -->
+            <a href="/leads/new"
+               class="bg-green-500 hover:bg-green-600 text-white font-medium px-4 py-2 rounded-lg transition-colors duration-200 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                </svg>
+                Добавить лида
+            </a>
+        </div>
+
+        <!-- Панель фильтрации (твоя существующая) -->
         <div class="mb-6">
             <h3 class="text-lg font-semibold mb-2">Фильтр по статусу:</h3>
             <div class="flex flex-wrap gap-2">
