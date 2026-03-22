@@ -73,6 +73,7 @@ dependencies {
 
     implementation "gg.jte:jte-spring-boot-starter-3:${jteSpringBootVersion}"
     implementation "gg.jte:jte:${jteVersion}"
+
 }
 
 jte {

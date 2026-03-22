@@ -5,6 +5,7 @@ spring:
   application:
     name: mentee-power-crm
 
+
 gg:
   jte:
     template-location: ./src/main/resources/jte
