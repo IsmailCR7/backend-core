@@ -1,4 +1,4 @@
-package ru.mentee.power.crm.spring.controller;
+package ru.mentee.power.crm.spring;
 
 import java.util.List;
 import java.util.UUID;
@@ -6,12 +6,11 @@ import java.util.UUID;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import ru.mentee.power.crm.model.Lead;
 import ru.mentee.power.crm.model.LeadStatus;
-import ru.mentee.power.crm.service.LeadService;
+import ru.mentee.power.crm.spring.service.LeadService;
 
 @Controller
 public class LeadController {

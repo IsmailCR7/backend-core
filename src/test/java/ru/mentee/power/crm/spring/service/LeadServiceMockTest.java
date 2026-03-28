@@ -1,4 +1,4 @@
-package ru.mentee.power.crm.service;
+package ru.mentee.power.crm.spring.service;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -8,6 +8,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import ru.mentee.power.crm.model.Lead;
 import ru.mentee.power.crm.model.LeadStatus;
 import ru.mentee.power.crm.repository.LeadRepository;
+import ru.mentee.power.crm.spring.service.LeadService;
 
 import java.util.Optional;
 import java.util.UUID;
