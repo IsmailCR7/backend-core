@@ -4,14 +4,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
-import ru.mentee.power.crm.repository.InMemoryLeadRepository;
 import ru.mentee.power.crm.repository.LeadRepository;
-import ru.mentee.power.crm.spring.LeadController;
-import ru.mentee.power.crm.spring.service.LeadService;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.ApplicationContext;
+import ru.mentee.power.crm.spring.controller.LeadController;
+
 import static org.assertj.core.api.Assertions.*;
 
 @SpringBootTest
