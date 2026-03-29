@@ -1,24 +1,31 @@
-package ru.mentee.power.crm.spring;
+package ru.mentee.power.crm.spring.controller;
 
 import java.util.List;
 import java.util.UUID;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import ru.mentee.power.crm.model.Lead;
 import ru.mentee.power.crm.model.LeadStatus;
 import ru.mentee.power.crm.spring.service.LeadService;
 
 @Controller
+@RequiredArgsConstructor
 public class LeadController {
     private final LeadService leadService;
 
-    public LeadController(LeadService leadService){
-        this.leadService = leadService;
+    @GetMapping
+    @ResponseBody
+    public String home() {
+        return "Spring Boot CRM is running! Beans created: " + leadService.findAll().size() + " leads.";
+
     }
+
     @GetMapping("/leads/new")
     public String showCreateForm(Model model){
         model.addAttribute("lead", new Lead(UUID.randomUUID(),"", "", LeadStatus.NEW));
