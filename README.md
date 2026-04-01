@@ -50,6 +50,16 @@
 - **Рабочая ветка:** `feature/BCORE-1`
 - **Тип ветки:** feature
 
+### BCORE-21: Add lead update operation with PRG pattern
+
+
+- LeadController: добавлены showEditForm() и updateLead()
+- LeadService: реализован метод update()
+- edit.jte: форма с предзаполненными полями
+- list.jte: добавлена ссылка "Редактировать"
+- Tests: MockMvc тесты для GET/POST /leads/{id}
+
+
 ### Действия выполнены:
 1. ✅ Создана ветка `feature/BCORE-1` от `master`
 2. ✅ Реализована функциональность класса Lead
