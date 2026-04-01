@@ -9,7 +9,9 @@ import java.util.stream.Collectors;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import ru.mentee.power.crm.model.Lead;
 import ru.mentee.power.crm.model.LeadStatus;
 import ru.mentee.power.crm.repository.LeadRepository;
@@ -45,7 +47,23 @@ public class LeadService {
         return repository.save(lead);
     }
 
+    public Lead update(UUID id, Lead updateLead) {
+        Optional <Lead> existing = repository.findById(id);
+        if (existing.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Can't find lead with id" + id);
+        }
+        Lead updLead = new Lead(
+                id,
+                updateLead.email(),
+                updateLead.company(),
+                updateLead.status()
+        );
+        return repository.save(updLead);
+    }
+
+
     public List<Lead> findAll() {
+
         return new ArrayList<Lead>(repository.findAll());
     }
     public List<Lead> findByStatus(LeadStatus status){
@@ -55,11 +73,14 @@ public class LeadService {
     }
 
     public Optional<Lead> findById(UUID id) {
+
         return repository.findById(id);
     }
 
     public Optional<Lead> findByEmail(String email) {
+
         return repository.findByEmail(email);
     }
+
 
 }
