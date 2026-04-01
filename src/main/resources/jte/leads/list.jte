@@ -79,6 +79,7 @@
                         <th class="px-4 py-2 text-left">Email</th>
                         <th class="px-4 py-2 text-left">Company</th>
                         <th class="px-4 py-2 text-left">Status</th>
+                        <th class="px-4 py-2 text-left">Действия</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -100,6 +101,12 @@
                                         ${lead.status()}
                                     </span>
                                 @endif
+                            </td>
+                            <td class="px-4 py-2">
+                                <a href="/leads/${String.valueOf(lead.id())}/edit"
+                                   class="text-blue-600 hover:underline">
+                                    Редактировать
+                                </a>
                             </td>
                         </tr>
                     @endfor

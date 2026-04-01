@@ -19,6 +19,7 @@ public record Lead(
     }
 
     public Lead(String email, String company, LeadStatus status) {
+
         this(UUID.randomUUID(), email, company, status);
     }
 
@@ -34,6 +35,7 @@ public record Lead(
 
     @Override
     public int hashCode() {
+
         return Objects.hash(id, email, company, status);
     }
 
