@@ -60,6 +60,13 @@ public class LeadService {
         );
         return repository.save(updLead);
     }
+    public void delete(UUID id) {
+        if (repository.findById(id).isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Can't find lead with id" + id );
+        }
+        repository.delete(id);
+
+    }
 
 
     public List<Lead> findAll() {
@@ -81,6 +88,4 @@ public class LeadService {
 
         return repository.findByEmail(email);
     }
-
-
 }
