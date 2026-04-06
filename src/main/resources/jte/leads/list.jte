@@ -104,9 +104,17 @@
                             </td>
                             <td class="px-4 py-2">
                                 <a href="/leads/${String.valueOf(lead.id())}/edit"
-                                   class="text-blue-600 hover:underline">
+                                   class="bg-pink-100 hover:bg-pink-200 text-pink-700 px-3 py-1 rounded border border-pink-300">
                                     Редактировать
                                 </a>
+                                <form method="post" action="/leads/${String.valueOf(lead.id())}/delete"
+                                     class="inline"
+                                     onsubmit="return confirm('Удалить лида ${lead.company()}?')">
+                                  <button type="submit"
+                                         class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700">
+                                     Удалить
+                                  </button>
+                                </form>
                             </td>
                         </tr>
                     @endfor
