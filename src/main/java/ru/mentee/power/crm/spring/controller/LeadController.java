@@ -38,17 +38,19 @@ public class LeadController {
     }
 
     @GetMapping("/leads")
-    public String showLeads(@RequestParam(required = false) LeadStatus status,
+    public String showLeads(@RequestParam(required = false) String search,
+                            @RequestParam(required = false) LeadStatus status,
                             Model model) {
 
         List<Lead> leads;
-        if (status == null) {
-            leads = leadService.findAll();
+        if (search != null && !search.isEmpty()) {
+            leads = leadService.searchByNameOrEmail(search, status);
         } else {
-            leads = leadService.findByStatus(status);
+            leads = leadService.findLeads(null, null, status);
         }
 
         model.addAttribute("leads", leads);
+        model.addAttribute("search", search);
         model.addAttribute("currentFilter", status);
         return "leads/list";
     }

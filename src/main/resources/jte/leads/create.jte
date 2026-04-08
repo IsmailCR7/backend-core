@@ -41,6 +41,8 @@ content = @`
                     <select name="status">
                         <option value="NEW">Новый</option>
                         <option value="CONTACTED">Связались</option>
+                        <option value="QUALIFIED">Квалифицированный</option>
+                        <option value="LOST">Потерянный</option>
                     </select>
                 </label>
             </div>
