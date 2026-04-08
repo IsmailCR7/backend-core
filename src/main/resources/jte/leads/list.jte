@@ -1,5 +1,6 @@
 @param java.util.List<ru.mentee.power.crm.model.Lead> leads
 @param ru.mentee.power.crm.model.LeadStatus currentFilter
+@param java.lang.String search
 
 @template.layout.main(content = @`
     <div class="bg-white rounded-lg shadow-md p-6">
@@ -17,45 +18,111 @@
             </a>
         </div>
 
-        <!-- Панель фильтрации (твоя существующая) -->
+        <!-- ========== ФОРМА ПОИСКА ========== -->
+        <div class="bg-white shadow rounded-lg p-4 mb-6">
+            <form method="get" action="/leads" class="flex gap-4 items-end">
+                <!-- Поле поиска -->
+                <div class="flex-1">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Поиск по имени или email
+                    </label>
+                    <input type="text"
+                           name="search"
+                           value="@if(search != null)${search}@endif"
+                           placeholder="Введите имя или email..."
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                </div>
+
+                <!-- Фильтр по статусу -->
+                <div class="w-48">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Статус
+                    </label>
+                    <select name="status" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                        <option value="">Все статусы</option>
+                        @if(currentFilter != null && currentFilter.toString() == "NEW")
+                            <option value="NEW" selected>Новый</option>
+                        @else
+                            <option value="NEW">Новый</option>
+                        @endif
+                        @if(currentFilter != null && currentFilter.toString() == "CONTACTED")
+                            <option value="CONTACTED" selected>В контакте</option>
+                        @else
+                            <option value="CONTACTED">В контакте</option>
+                        @endif
+                        @if(currentFilter != null && currentFilter.toString() == "QUALIFIED")
+                            <option value="QUALIFIED" selected>Квалифицирован</option>
+                        @else
+                            <option value="QUALIFIED">Квалифицирован</option>
+                        @endif
+                        @if(currentFilter != null && currentFilter.toString() == "LOST")
+                            <option value="LOST" selected>Потерян</option>
+                        @else
+                            <option value="LOST">Потерян</option>
+                        @endif
+                    </select>
+                </div>
+
+                <!-- Кнопки -->
+                <div class="flex gap-2">
+                    <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
+                        🔍 Найти
+                    </button>
+                    <a href="/leads" class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600">
+                        ✖️ Сбросить
+                    </a>
+                </div>
+            </form>
+        </div>
+        <!-- ========== КОНЕЦ ФОРМЫ ПОИСКА ========== -->
+
+        <!-- Панель фильтрации -->
         <div class="mb-6">
             <h3 class="text-lg font-semibold mb-2">Фильтр по статусу:</h3>
             <div class="flex flex-wrap gap-2">
                 <!-- Кнопка "Все" -->
-                <a href="/leads"
-                   class="px-4 py-2 rounded transition-colors inline-block
-                          ${currentFilter == null ?
-                            "bg-blue-600 text-white" :
-                            "bg-gray-200 hover:bg-gray-300"}">
-                    Все
-                </a>
+                @if(currentFilter == null)
+                    <a href="/leads" class="px-4 py-2 rounded transition-colors inline-block bg-blue-600 text-white">
+                        Все
+                    </a>
+                @else
+                    <a href="/leads" class="px-4 py-2 rounded transition-colors inline-block bg-gray-200 hover:bg-gray-300">
+                        Все
+                    </a>
+                @endif
 
                 <!-- Кнопка "NEW" -->
-                <a href="/leads?status=NEW"
-                   class="px-4 py-2 rounded transition-colors inline-block
-                          ${currentFilter != null && currentFilter.toString() == "NEW" ?
-                            "bg-blue-600 text-white" :
-                            "bg-gray-200 hover:bg-gray-300"}">
-                    Новые (NEW)
-                </a>
+                @if(currentFilter != null && currentFilter.toString() == "NEW")
+                    <a href="/leads?status=NEW" class="px-4 py-2 rounded transition-colors inline-block bg-blue-600 text-white">
+                        Новые (NEW)
+                    </a>
+                @else
+                    <a href="/leads?status=NEW" class="px-4 py-2 rounded transition-colors inline-block bg-gray-200 hover:bg-gray-300">
+                        Новые (NEW)
+                    </a>
+                @endif
 
                 <!-- Кнопка "CONTACTED" -->
-                <a href="/leads?status=CONTACTED"
-                   class="px-4 py-2 rounded transition-colors inline-block
-                          ${currentFilter != null && currentFilter.toString() == "CONTACTED" ?
-                            "bg-blue-600 text-white" :
-                            "bg-gray-200 hover:bg-gray-300"}">
-                    В работе (CONTACTED)
-                </a>
+                @if(currentFilter != null && currentFilter.toString() == "CONTACTED")
+                    <a href="/leads?status=CONTACTED" class="px-4 py-2 rounded transition-colors inline-block bg-blue-600 text-white">
+                        В работе (CONTACTED)
+                    </a>
+                @else
+                    <a href="/leads?status=CONTACTED" class="px-4 py-2 rounded transition-colors inline-block bg-gray-200 hover:bg-gray-300">
+                        В работе (CONTACTED)
+                    </a>
+                @endif
 
                 <!-- Кнопка "QUALIFIED" -->
-                <a href="/leads?status=QUALIFIED"
-                   class="px-4 py-2 rounded transition-colors inline-block
-                          ${currentFilter != null && currentFilter.toString() == "QUALIFIED" ?
-                            "bg-blue-600 text-white" :
-                            "bg-gray-200 hover:bg-gray-300"}">
-                    Квалифицированные (QUALIFIED)
-                </a>
+                @if(currentFilter != null && currentFilter.toString() == "QUALIFIED")
+                    <a href="/leads?status=QUALIFIED" class="px-4 py-2 rounded transition-colors inline-block bg-blue-600 text-white">
+                        Квалифицированные (QUALIFIED)
+                    </a>
+                @else
+                    <a href="/leads?status=QUALIFIED" class="px-4 py-2 rounded transition-colors inline-block bg-gray-200 hover:bg-gray-300">
+                        Квалифицированные (QUALIFIED)
+                    </a>
+                @endif
             </div>
 
             <!-- Информация о текущем фильтре -->
@@ -122,4 +189,4 @@
             </table>
         @endif
     </div>
-`)
+`)>
