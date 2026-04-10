@@ -51,7 +51,7 @@ public class Application {
         }
 
         try {
-            leadService.addLead("elena@example.com", "АО МедиаГрупп", LeadStatus.NEW);
+            leadService.addLead("elena@example.com", "АО МедиаГрупп", LeadStatus.LOST);
             System.out.println("✅ Добавлен: elena@example.com");
         } catch (Exception e) {
             System.out.println("⚠️ " + e.getMessage());
