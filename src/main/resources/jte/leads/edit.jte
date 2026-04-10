@@ -1,5 +1,6 @@
 @import ru.mentee.power.crm.model.Lead
 @import ru.mentee.power.crm.model.LeadStatus
+@import java.util.UUID
 
 @param Lead lead
 @param LeadStatus[] statuses
@@ -22,7 +23,7 @@
             </div>
         @endif
 
-        <form method="post" action="/leads/${lead.id()}" class="space-y-4">
+        <form method="post" action="/leads/${lead.id().toString()}" class="space-y-4">
             <!-- Поле Email -->
             <div>
                 <label for="email" class="block text-sm font-medium text-gray-700 mb-1">
@@ -57,6 +58,7 @@
                     <option value="CONTACTED">Связались</option>
                     <option value="QUALIFIED">Квалифицированный</option>
                     <option value="LOST">Потерянный</option>
+                    <option value="CONFIDENTIAL">Конфиденциальный</option>
                 </select>
             </div>
 

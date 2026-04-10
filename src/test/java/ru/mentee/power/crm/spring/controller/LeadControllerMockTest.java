@@ -90,7 +90,7 @@ class LeadControllerMockTest {
         mockMvc.perform(get("/leads/" + lead.id() + "/edit"))
                 .andExpect(status().isOk())
                 .andExpect(model().attributeExists("lead"))
-                .andExpect(view().name("spring/edit"))
+                .andExpect(view().name("leads/edit"))
                 .andExpect(content().string(containsString("Редактирование лида")))
                 .andExpect(content().string(containsString("test1@example.ru")));
     }
