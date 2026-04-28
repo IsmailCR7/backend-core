@@ -60,6 +60,11 @@
                         @else
                             <option value="LOST">Потерян</option>
                         @endif
+                        @if(currentFilter != null && currentFilter.toString() == "CONFIDENTIAL")
+                            <option value="CONFIDENTIAL" selected>Конфиденциальный</option>
+                        @else
+                            <option value="CONFIDENTIAL">Конфиденциальный</option>
+                        @endif
                     </select>
                 </div>
 
@@ -123,6 +128,17 @@
                         Квалифицированные (QUALIFIED)
                     </a>
                 @endif
+
+                 <!-- Кнопка "LOST" -->
+                 @if(currentFilter != null && currentFilter.toString() == "LOST")
+                    <a href="/leads?status=LOST" class="px-4 py-2 rounded transition-colors inline-block bg-blue-600 text-white">
+                        Потерянные (LOST)
+                    </a>
+                 @else
+                    <a href="/leads?status=LOST" class="px-4 py-2 rounded transition-colors inline-block bg-gray-200 hover:bg-gray-300">
+                        Потерянные (LOST)
+                    </a>
+                  @endif
             </div>
 
             <!-- Информация о текущем фильтре -->
