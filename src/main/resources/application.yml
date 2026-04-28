@@ -1,13 +1,18 @@
+spring:
+  application:
+    name: m-crm
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
 server:
   port: 8081
 
-spring:
-  application:
-    name: mentee-power-crm
-
 gg:
   jte:
-    template-location: ./src/main/resources/jte
     development-mode: true
     usePrecompiledTemplates: false
-    suffix: .jte
+    template-location: src/main/resources/jte
+    print-preview: true

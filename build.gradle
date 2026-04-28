@@ -78,10 +78,31 @@ dependencies {
 
     implementation "jakarta.validation:jakarta.validation-api:${validationApiVersion}"
     implementation "org.hibernate.validator:hibernate-validator:${hibernateValidatorVersion}"
+
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    runtimeOnly 'org.postgresql:postgresql'
+
+    // Spring Boot Starters
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    // PostgreSQL JDBC Driver (для dev и production)
+    runtimeOnly 'org.postgresql:postgresql'
+
+    // H2 Database (только для тестов)
+    testRuntimeOnly 'com.h2database:h2:2.3.232'
+
+    // Testing
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.assertj:assertj-core:3.24.2'
+
+    implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
+
+
 }
 
 jte {
-    sourceDirectory = file("src/main/jte").toPath()
+    sourceDirectory = file("src/main/resources/jte").toPath()
     contentType = "Html"
     binaryStaticContent = false
 }

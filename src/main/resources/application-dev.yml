@@ -1,0 +1,23 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/crm
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+    
+  jpa:
+    database: POSTGRESQL
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        
+  sql:
+    init:
+      mode: never
+      
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    com.zaxxer.hikari: DEBUG

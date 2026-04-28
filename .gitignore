@@ -40,4 +40,9 @@ bin/
 .vscode/
 
 ### Mac OS ###
-.DS_Store
+.DS_Storedocker/postgres-data/
+
+# Данные Docker
+docker/postgres-data/
+docker/pgadmin-data/
+*.init
