@@ -2,255 +2,153 @@ package ru.mentee.power.crm.repository;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.test.context.ContextConfiguration;
 import ru.mentee.power.crm.model.Lead;
 import ru.mentee.power.crm.model.LeadStatus;
+import ru.mentee.power.crm.spring.Application;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
+@DataJpaTest
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@ContextConfiguration(classes = Application.class)  // ← Указываем главный конфигурационный класс
 class LeadRepositoryTest {
 
+    @Autowired
     private LeadRepository repository;
+
+    private Lead testLead;
 
     @BeforeEach
     void setUp() {
-        // Создаем новую реализацию репозитория перед каждым тестом
-        repository = new InMemoryLeadRepository();
+        testLead = new Lead("test@example.com", "Test Company", LeadStatus.NEW);
+        repository.deleteAll();  // Очищаем БД перед каждым тестом
     }
 
     @Test
     void shouldSaveLead() {
-        // Given
-        Lead lead = new Lead(
-                UUID.randomUUID(),
-                "test@example.com",
-                "Test Company",
-                LeadStatus.NEW
-        );
-
         // When
-        Lead saved = repository.save(lead);
+        Lead saved = repository.save(testLead);
 
         // Then
-        assertThat(saved).isEqualTo(lead);
-        assertThat(repository.findById(lead.id())).isPresent();
+        assertThat(saved.getId()).isNotNull();
+        assertThat(saved.getCreatedAt()).isNotNull();
+        assertThat(repository.findById(saved.getId())).isPresent();
     }
 
     @Test
-    void shouldFindLeadById() {
+    void shouldFindByEmailDerivedQuery() {
         // Given
-        Lead lead = new Lead(
-                UUID.randomUUID(),
-                "find@example.com",
-                "Find Company",
-                LeadStatus.NEW
-        );
-        repository.save(lead);
+        repository.save(testLead);
 
         // When
-        Optional<Lead> found = repository.findById(lead.id());
+        Optional<Lead> found = repository.findByEmail("test@example.com");
 
         // Then
         assertThat(found).isPresent();
-        assertThat(found.get()).isEqualTo(lead);
-        assertThat(found.get().email()).isEqualTo("find@example.com");
+        assertThat(found.get().getCompany()).isEqualTo("Test Company");
     }
 
     @Test
-    void shouldReturnEmptyOptionalWhenIdNotFound() {
+    void shouldFindByEmailNativeQuery() {
         // Given
-        UUID nonExistentId = UUID.randomUUID();
+        repository.save(testLead);
 
         // When
-        Optional<Lead> found = repository.findById(nonExistentId);
-
-        // Then
-        assertThat(found).isEmpty();
-    }
-
-    @Test
-    void shouldFindLeadByEmail() {
-        // Given
-        Lead lead = new Lead(
-                UUID.randomUUID(),
-                "email@example.com",
-                "Email Company",
-                LeadStatus.NEW
-        );
-        repository.save(lead);
-
-        // When
-        Optional<Lead> found = repository.findByEmail("email@example.com");
+        Optional<Lead> found = repository.findByEmailNative("test@example.com");
 
         // Then
         assertThat(found).isPresent();
-        assertThat(found.get()).isEqualTo(lead);
-        assertThat(found.get().company()).isEqualTo("Email Company");
+        assertThat(found.get().getCompany()).isEqualTo("Test Company");
     }
 
     @Test
-    void shouldReturnEmptyOptionalWhenEmailNotFound() {
+    void shouldFindByStatusDerivedQuery() {
         // Given
-        String nonExistentEmail = "nonexistent@example.com";
+        repository.save(testLead);
+        repository.save(new Lead("new2@test.com", "Another Co", LeadStatus.NEW));
+        repository.save(new Lead("contacted@test.com", "Contacted Co", LeadStatus.CONTACTED));
 
         // When
-        Optional<Lead> found = repository.findByEmail(nonExistentEmail);
+        List<Lead> newLeads = repository.findByStatus(LeadStatus.NEW);
 
         // Then
-        assertThat(found).isEmpty();
+        assertThat(newLeads).hasSize(2);
+        assertThat(newLeads).allMatch(lead -> lead.getStatus() == LeadStatus.NEW);
     }
 
     @Test
-    void shouldFindAllLeads() {
+    void shouldFindByStatusNativeQuery() {
         // Given
-        Lead lead1 = new Lead(
-                UUID.randomUUID(),
-                "first@example.com",
-                "First Company",
-                LeadStatus.NEW
-        );
-
-        Lead lead2 = new Lead(
-                UUID.randomUUID(),
-                "second@example.com",
-                "Second Company",
-                LeadStatus.QUALIFIED
-        );
-
-        repository.save(lead1);
-        repository.save(lead2);
+        repository.save(testLead);
+        repository.save(new Lead("qualified@test.com", "Qualified Co", LeadStatus.QUALIFIED));
 
         // When
-        List<Lead> allLeads = repository.findAll();
+        List<Lead> qualifiedLeads = repository.findByStatusNative("QUALIFIED");
 
         // Then
-        assertThat(allLeads).hasSize(2);
-        assertThat(allLeads).containsExactlyInAnyOrder(lead1, lead2);
+        assertThat(qualifiedLeads).hasSize(1);
+        assertThat(qualifiedLeads.get(0).getEmail()).isEqualTo("qualified@test.com");
     }
 
     @Test
-    void shouldReturnEmptyListWhenNoLeads() {
+    void shouldCountByStatusNative() {
+        // Given
+        repository.save(testLead);
+        repository.save(new Lead("new2@test.com", "Another Co", LeadStatus.NEW));
+        repository.save(new Lead("contacted@test.com", "Contacted Co", LeadStatus.CONTACTED));
+
         // When
-        List<Lead> allLeads = repository.findAll();
+        long newCount = repository.countByStatusNative("NEW");
+        long contactedCount = repository.countByStatusNative("CONTACTED");
 
         // Then
-        assertThat(allLeads).isEmpty();
+        assertThat(newCount).isEqualTo(2);
+        assertThat(contactedCount).isEqualTo(1);
+    }
+
+    @Test
+    void shouldUpdateLead() {
+        // Given
+        Lead saved = repository.save(testLead);
+
+        // When
+        saved.setCompany("Updated Company");
+        saved.setStatus(LeadStatus.QUALIFIED);
+        Lead updated = repository.save(saved);
+
+        // Then
+        Optional<Lead> found = repository.findById(saved.getId());
+        assertThat(found).isPresent();
+        assertThat(found.get().getCompany()).isEqualTo("Updated Company");
+        assertThat(found.get().getStatus()).isEqualTo(LeadStatus.QUALIFIED);
     }
 
     @Test
     void shouldDeleteLead() {
         // Given
-        Lead lead = new Lead(
-                UUID.randomUUID(),
-                "delete@example.com",
-                "Delete Company",
-                LeadStatus.NEW
-        );
-        repository.save(lead);
+        Lead saved = repository.save(testLead);
 
         // When
-        repository.delete(lead.id());
+        repository.deleteById(saved.getId());
 
         // Then
-        assertThat(repository.findById(lead.id())).isEmpty();
-        assertThat(repository.findByEmail("delete@example.com")).isEmpty();
+        assertThat(repository.findById(saved.getId())).isEmpty();
     }
 
     @Test
-    void shouldNotThrowErrorWhenDeletingNonExistentId() {
-        // Given
-        UUID nonExistentId = UUID.randomUUID();
-
-        // When/Then - should not throw any exception
-        assertThatCode(() -> repository.delete(nonExistentId))
-                .doesNotThrowAnyException();
-    }
-
-    @Test
-    void shouldUpdateLeadWhenSavingWithSameId() {
-        // Given
-        UUID id = UUID.randomUUID();
-        Lead originalLead = new Lead(
-                id,
-                "original@example.com",
-                "Original Company",
-                LeadStatus.NEW
-        );
-        repository.save(originalLead);
-
-        // When - сохраняем лида с тем же ID, но другими данными
-        Lead updatedLead = new Lead(
-                id,
-                "original@example.com",  // email тот же
-                "Updated Company",        // компания изменилась
-                LeadStatus.QUALIFIED      // статус изменился
-        );
-        repository.save(updatedLead);
-
-        // Then
-        Optional<Lead> found = repository.findById(id);
-        assertThat(found).isPresent();
-        assertThat(found.get().company()).isEqualTo("Updated Company");
-        assertThat(found.get().status()).isEqualTo(LeadStatus.QUALIFIED);
-
-        // Проверяем, что в репозитории только один лид
-        assertThat(repository.findAll()).hasSize(1);
-    }
-
-    @Test
-    void shouldMaintainEmailIndexAfterDelete() {
-        // Given
-        Lead lead = new Lead(
-                UUID.randomUUID(),
-                "index@example.com",
-                "Index Company",
-                LeadStatus.NEW
-        );
-        repository.save(lead);
-
+    void shouldReturnEmptyOptionalWhenEmailNotFound() {
         // When
-        repository.delete(lead.id());
-
-        // Then - email индекс тоже должен очиститься
-        assertThat(repository.findByEmail("index@example.com")).isEmpty();
-    }
-
-    @Test
-    void shouldHandleMultipleLeadsWithDifferentEmails() {
-        // Given
-        Lead lead1 = new Lead(
-                UUID.randomUUID(),
-                "multi1@example.com",
-                "Company 1",
-                LeadStatus.NEW
-        );
-
-        Lead lead2 = new Lead(
-                UUID.randomUUID(),
-                "multi2@example.com",
-                "Company 2",
-                LeadStatus.QUALIFIED
-        );
-
-        Lead lead3 = new Lead(
-                UUID.randomUUID(),
-                "multi3@example.com",
-                "Company 3",
-                LeadStatus.CONTACTED
-        );
-
-        // When
-        repository.save(lead1);
-        repository.save(lead2);
-        repository.save(lead3);
+        Optional<Lead> found = repository.findByEmail("nonexistent@test.com");
 
         // Then
-        assertThat(repository.findAll()).hasSize(3);
-        assertThat(repository.findByEmail("multi1@example.com")).isPresent();
-        assertThat(repository.findByEmail("multi2@example.com")).isPresent();
-        assertThat(repository.findByEmail("multi3@example.com")).isPresent();
+        assertThat(found).isEmpty();
     }
 }

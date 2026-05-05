@@ -23,7 +23,7 @@
             </div>
         @endif
 
-        <form method="post" action="/leads/${lead.id().toString()}" class="space-y-4">
+        <form method="post" action="/leads/${lead.getId().toString()}" class="space-y-4">
             <!-- Поле Email -->
             <div>
                 <label for="email" class="block text-sm font-medium text-gray-700 mb-1">
@@ -32,7 +32,7 @@
                 <input type="email"
                        id="email"
                        name="email"
-                       value="${lead.email()}"
+                       value="${lead.getEmail()}"
                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
 
@@ -44,7 +44,7 @@
                 <input type="text"
                        id="company"
                        name="company"
-                       value="${lead.company()}"
+                       value="${lead.getCompany()}"
                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
 
@@ -54,11 +54,13 @@
                     Статус <span class="text-red-500">*</span>
                 </label>
                 <select id="status" name="status" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="NEW">Новый</option>
-                    <option value="CONTACTED">Связались</option>
-                    <option value="QUALIFIED">Квалифицированный</option>
-                    <option value="LOST">Потерянный</option>
-                    <option value="CONFIDENTIAL">Конфиденциальный</option>
+                    @for(var s : statuses)
+                        @if(s.toString() == lead.getStatus().toString())
+                            <option value="${s.toString()}" selected>${s.toString()}</option>
+                        @else
+                            <option value="${s.toString()}">${s.toString()}</option>
+                        @endif
+                    @endfor
                 </select>
             </div>
 

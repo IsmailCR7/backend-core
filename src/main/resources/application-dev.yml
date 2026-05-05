@@ -4,7 +4,7 @@ spring:
     username: postgres
     password: postgres
     driver-class-name: org.postgresql.Driver
-    
+
   jpa:
     database: POSTGRESQL
     hibernate:
@@ -12,12 +12,14 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-        
+        format_sql: true  # Форматирование SQL
+
   sql:
     init:
       mode: never
-      
+
 logging:
   level:
-    org.hibernate.SQL: DEBUG
+    org.hibernate.SQL: DEBUG          # Показываем SQL запросы
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE  # Показываем значения параметров
     com.zaxxer.hikari: DEBUG

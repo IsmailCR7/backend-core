@@ -17,6 +17,7 @@ import ru.mentee.power.crm.spring.service.DealService;
 import ru.mentee.power.crm.spring.service.LeadService;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,7 +26,6 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -48,14 +48,20 @@ class DealControllerTest {
     private Lead testLead;
     private Deal testDeal;
     private BigDecimal testAmount;
+    private LocalDateTime now;
 
     @BeforeEach
     void setUp() {
         testLeadId = UUID.randomUUID();
         testDealId = UUID.randomUUID();
         testAmount = new BigDecimal("10000.00");
-        testLead = new Lead(testLeadId, "test@example.com", "Test Company", LeadStatus.NEW);
-        testDeal = new Deal(testLeadId, testAmount);
+        now = LocalDateTime.now();
+
+        // Используем правильный конструктор Lead: (id, email, company, status, createdAt)
+        testLead = new Lead(testLeadId, "test@example.com", "Test Company", LeadStatus.NEW, now);
+
+        // Используем правильный конструктор Deal: (id, leadId, amount, status, createdAt)
+        testDeal = new Deal(testDealId, testLeadId, testAmount, DealStatus.NEW, now);
     }
 
     @Test
@@ -164,6 +170,19 @@ class DealControllerTest {
     }
 
     @Test
+    void convertLeadToDealWithNegativeAmountShouldStillCallService() {
+        // Given
+        BigDecimal negativeAmount = new BigDecimal("-1000.00");
+
+        // When
+        String redirectUrl = dealController.convertLeadToDeal(testLeadId, negativeAmount);
+
+        // Then
+        verify(dealService).convertLeadToDeal(testLeadId, negativeAmount);
+        assertThat(redirectUrl).isEqualTo("redirect:/deals");
+    }
+
+    @Test
     void transitionStatusShouldCallServiceAndRedirectToKanban() {
         // Given
         DealStatus newStatus = DealStatus.QUALIFIED;
@@ -206,7 +225,8 @@ class DealControllerTest {
     void showConvertFormShouldHandleMultipleCalls() {
         // Given
         UUID secondLeadId = UUID.randomUUID();
-        Lead secondLead = new Lead(secondLeadId, "second@example.com", "Second Company", LeadStatus.CONTACTED);
+        Lead secondLead = new Lead(secondLeadId, "second@example.com", "Second Company", LeadStatus.CONTACTED, now);
+
         when(leadService.findById(testLeadId)).thenReturn(Optional.of(testLead));
         when(leadService.findById(secondLeadId)).thenReturn(Optional.of(secondLead));
 
@@ -219,18 +239,5 @@ class DealControllerTest {
         verify(model).addAttribute("lead", secondLead);
         assertThat(viewName1).isEqualTo("deals/convert");
         assertThat(viewName2).isEqualTo("deals/convert");
-    }
-
-    @Test
-    void convertLeadToDealWithNegativeAmountShouldStillCallService() {
-        // Given
-        BigDecimal negativeAmount = new BigDecimal("-1000.00");
-
-        // When
-        String redirectUrl = dealController.convertLeadToDeal(testLeadId, negativeAmount);
-
-        // Then
-        verify(dealService).convertLeadToDeal(testLeadId, negativeAmount);
-        assertThat(redirectUrl).isEqualTo("redirect:/deals");
     }
 }

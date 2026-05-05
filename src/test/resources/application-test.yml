@@ -3,8 +3,8 @@ spring:
     url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
     driver-class-name: org.h2.Driver
     username: sa
-    password: 
-    
+    password:
+
   jpa:
     database: H2
     hibernate:
@@ -12,12 +12,18 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
-        
+        format_sql: true  # Добавьте форматирование
+
   sql:
     init:
       mode: always
       schema-locations: classpath:schema.sql
-      
+
   h2:
     console:
       enabled: true
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE

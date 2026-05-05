@@ -15,6 +15,7 @@ import org.springframework.web.server.ResponseStatusException;
 import ru.mentee.power.crm.model.Lead;
 import ru.mentee.power.crm.model.LeadStatus;
 import ru.mentee.power.crm.spring.service.LeadService;
+import java.util.UUID;
 
 @Controller
 @RequiredArgsConstructor
@@ -24,12 +25,12 @@ public class LeadController {
     @GetMapping
     @ResponseBody
     public String home() {
-        return "Spring Boot CRM is running! Beans created: " + leadService.findAll().size() + " leads.";
+        return "Spring Boot CRM is running! Leads count: " + leadService.findAll().size();
     }
 
     @GetMapping("/leads/new")
     public String showCreateForm(Model model) {
-        model.addAttribute("lead", new Lead(UUID.randomUUID(), "", "", LeadStatus.NEW));
+        model.addAttribute("lead", new Lead());
         model.addAttribute("statuses", LeadStatus.values());
         return "leads/create";
     }
@@ -38,12 +39,11 @@ public class LeadController {
     public String showLeads(@RequestParam(required = false) String search,
                             @RequestParam(required = false) LeadStatus status,
                             Model model) {
-
         List<Lead> leads;
         if (search != null && !search.isEmpty()) {
             leads = leadService.searchByNameOrEmail(search, status);
         } else {
-            leads = leadService.findLeads(null, null, status);
+            leads = leadService.findByStatus(status);
         }
 
         model.addAttribute("leads", leads);
@@ -61,7 +61,7 @@ public class LeadController {
             return "leads/create";
         }
         try {
-            leadService.addLead(lead.email(), lead.company(), lead.status());
+            leadService.addLead(lead);
             return "redirect:/leads";
         } catch (IllegalStateException e) {
             model.addAttribute("error", e.getMessage());
@@ -72,13 +72,11 @@ public class LeadController {
 
     @GetMapping("/leads/{id}/edit")
     public String showEditForm(@PathVariable UUID id, Model model) {
-        Optional<Lead> lead = leadService.findById(id);
-        if (lead.isEmpty()) {
-            throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND,
-                    "Cannot find lead with id " + id);
-        }
-        model.addAttribute("lead", lead.get());
+        Lead lead = leadService.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Cannot find lead with id " + id));
+        model.addAttribute("lead", lead);
         model.addAttribute("statuses", LeadStatus.values());
         return "leads/edit";
     }
@@ -92,23 +90,12 @@ public class LeadController {
             model.addAttribute("statuses", LeadStatus.values());
             return "leads/edit";
         }
-        try {
-            leadService.update(id, lead);
-            return "redirect:/leads";
-        } catch (IllegalStateException e) {
-            model.addAttribute("error", e.getMessage());
-            model.addAttribute("statuses", LeadStatus.values());
-            return "leads/edit";
-        }
+        leadService.update(id, lead);
+        return "redirect:/leads";
     }
 
     @PostMapping("/leads/{id}/delete")
     public String deleteLead(@PathVariable UUID id) {
-        if (leadService.findById(id).isEmpty()) {
-            throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND,
-                    "Cannot find lead with id " + id);
-        }
         leadService.delete(id);
         return "redirect:/leads";
     }

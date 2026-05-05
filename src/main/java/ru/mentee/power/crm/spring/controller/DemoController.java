@@ -1,6 +1,5 @@
 package ru.mentee.power.crm.spring.controller;
 
-import ru.mentee.power.crm.repository.InMemoryLeadRepository;
 import ru.mentee.power.crm.repository.LeadRepository;
 import ru.mentee.power.crm.spring.service.LeadService;
 import org.springframework.beans.factory.annotation.Autowired;

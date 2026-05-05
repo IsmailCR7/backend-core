@@ -25,7 +25,7 @@ content = @`
                 <input type="email"
                        id="email"
                        name="email"
-                       value="${lead.email()}"
+                       value="${lead.getEmail()}"
                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                        placeholder="example@company.com"/>
             </div>
@@ -38,7 +38,7 @@ content = @`
                 <input type="text"
                        id="company"
                        name="company"
-                       value="${lead.company()}"
+                       value="${lead.getCompany()}"
                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                        placeholder="TestCorp"/>
             </div>
@@ -49,10 +49,9 @@ content = @`
                     Status <span class="text-red-500">*</span>
                 </label>
                 <select id="status" name="status" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="NEW">Новый</option>
-                    <option value="CONTACTED">Связались</option>
-                    <option value="QUALIFIED">Квалифицированный</option>
-                    <option value="LOST">Потерянный</option>
+                    @for(var s : statuses)
+                        <option value="${s.toString()}">${s.toString()}</option>
+                    @endfor
                 </select>
             </div>
 

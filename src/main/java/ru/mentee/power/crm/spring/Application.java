@@ -2,62 +2,50 @@ package ru.mentee.power.crm.spring;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.annotation.ComponentScan;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import ru.mentee.power.crm.model.LeadStatus;
 import ru.mentee.power.crm.spring.service.LeadService;
 
-@SpringBootApplication
-@ComponentScan(basePackages = {"ru.mentee.power.crm"})
+@SpringBootApplication(scanBasePackages = "ru.mentee.power.crm")
+@EntityScan(basePackages = "ru.mentee.power.crm.model")
+@EnableJpaRepositories(basePackages = "ru.mentee.power.crm.repository")
+@Slf4j
 public class Application {
+
     public static void main(String[] args) {
         ConfigurableApplicationContext context = SpringApplication.run(Application.class, args);
 
         LeadService leadService = context.getBean(LeadService.class);
 
-        try {
-            leadService.addLead("davidov-ismail@mail.ru", "АК Победа", LeadStatus.QUALIFIED);
-            System.out.println("✅ Добавлен: davidov-ismail@mail.ru");
-        } catch (Exception e) {
-            System.out.println("⚠️ " + e.getMessage());
+        // Добавляем тестовые данные только если база пустая
+        if (leadService.findAll().isEmpty()) {
+            log.info("Добавление тестовых данных...");
+
+            addLeadSafely(leadService, "davidov-ismail@mail.ru", "АК Победа", LeadStatus.QUALIFIED);
+            addLeadSafely(leadService, "ivan@example.com", "ООО Ромашка", LeadStatus.NEW);
+            addLeadSafely(leadService, "petr@example.com", "ЗАО ТехноСервис", LeadStatus.CONTACTED);
+            addLeadSafely(leadService, "anna@example.com", "ИП Анна", LeadStatus.QUALIFIED);
+            addLeadSafely(leadService, "sergey@example.com", "ООО СтройИнвест", LeadStatus.CONTACTED);
+            addLeadSafely(leadService, "elena@example.com", "АО МедиаГрупп", LeadStatus.LOST);
+
+            log.info("✅ Тестовые данные добавлены");
+        } else {
+            log.info("ℹ️ База уже содержит {} записей", leadService.findAll().size());
         }
 
-        try {
-            leadService.addLead("ivan@example.com", "ООО Ромашка", LeadStatus.NEW);
-            System.out.println("✅ Добавлен: ivan@example.com");
-        } catch (Exception e) {
-            System.out.println("⚠️ " + e.getMessage());
-        }
-
-        try {
-            leadService.addLead("petr@example.com", "ЗАО ТехноСервис", LeadStatus.CONTACTED);
-            System.out.println("✅ Добавлен: petr@example.com");
-        } catch (Exception e) {
-            System.out.println("⚠️ " + e.getMessage());
-        }
-
-        try {
-            leadService.addLead("anna@example.com", "ИП Анна", LeadStatus.QUALIFIED);
-            System.out.println("✅ Добавлен: anna@example.com");
-        } catch (Exception e) {
-            System.out.println("⚠️ " + e.getMessage());
-        }
-
-        try {
-            leadService.addLead("sergey@example.com", "ООО СтройИнвест", LeadStatus.CONTACTED);
-            System.out.println("✅ Добавлен: sergey@example.com");
-        } catch (Exception e) {
-            System.out.println("⚠️ " + e.getMessage());
-        }
-
-        try {
-            leadService.addLead("elena@example.com", "АО МедиаГрупп", LeadStatus.LOST);
-            System.out.println("✅ Добавлен: elena@example.com");
-        } catch (Exception e) {
-            System.out.println("⚠️ " + e.getMessage());
-        }
-
-        System.out.println("🚀 Приложение запущено с тестовыми данными!");
+        log.info("🚀 Приложение запущено на порту 8081");
+        log.info("📊 Открыть: http://localhost:8081/leads");
     }
 
+    private static void addLeadSafely(LeadService service, String email, String company, LeadStatus status) {
+        try {
+            service.addLead(email, company, status);
+            log.info("✅ Добавлен: {} - {}", email, company);
+        } catch (Exception e) {
+            log.warn("⚠️ Не добавлен {}: {}", email, e.getMessage());
+        }
+    }
 }

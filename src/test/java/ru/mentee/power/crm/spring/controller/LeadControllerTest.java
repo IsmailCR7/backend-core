@@ -2,404 +2,328 @@ package ru.mentee.power.crm.spring.controller;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.server.ResponseStatusException;
 import ru.mentee.power.crm.model.Lead;
 import ru.mentee.power.crm.model.LeadStatus;
 import ru.mentee.power.crm.spring.service.LeadService;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.mockito.Mockito.*;
 
-@WebMvcTest(LeadController.class)
+@ExtendWith(MockitoExtension.class)
 class LeadControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @MockitoBean
+    @Mock
     private LeadService leadService;
 
-    private Lead lead1;
-    private Lead lead2;
-    private Lead lead3;
-    private Lead lead4;
-    private Lead lead5;
+    @Mock
+    private Model model;
+
+    @Mock
+    private BindingResult bindingResult;
+
+    @InjectMocks
+    private LeadController leadController;
+
+    private UUID testId;
+    private Lead testLead;
+    private LocalDateTime now;
 
     @BeforeEach
     void setUp() {
-        // Подготовка тестовых данных
-        lead1 = new Lead(
-                UUID.randomUUID(),
-                "ivan@example.com",
-                "Ivan Company",
-                LeadStatus.NEW
-        );
+        testId = UUID.randomUUID();
+        now = LocalDateTime.now();
+        testLead = new Lead("test@example.com", "Test Company", LeadStatus.NEW);
+        testLead.setId(testId);
+        testLead.setCreatedAt(now);
+    }
 
-        lead2 = new Lead(
-                UUID.randomUUID(),
-                "petr@example.com",
-                "Petr Company",
-                LeadStatus.CONTACTED
-        );
+    // ==================== HOME TESTS ====================
 
-        lead3 = new Lead(
-                UUID.randomUUID(),
-                "ivanov@example.com",
-                "Ivanov Corp",
-                LeadStatus.QUALIFIED
-        );
+    @Test
+    void homeShouldReturnWelcomeMessageWithLeadsCount() {
+        // Given
+        List<Lead> leads = Arrays.asList(testLead);
+        when(leadService.findAll()).thenReturn(leads);
 
-        lead4 = new Lead(
-                UUID.randomUUID(),
-                "sergey@example.com",
-                "Sergey Company",
-                LeadStatus.NEW
-        );
+        // When
+        String result = leadController.home();
 
-        lead5 = new Lead(
-                UUID.randomUUID(),
-                "test@example.com",
-                "Test Company",
-                LeadStatus.LOST
-        );
+        // Then
+        assertThat(result).isEqualTo("Spring Boot CRM is running! Leads count: 1");
+        verify(leadService).findAll();
     }
 
     @Test
-    void testGetLeadsWithSearchParamReturnsLeadsContainingIvan() throws Exception {
-        // Arrange
-        List<Lead> expectedLeads = Arrays.asList(lead1, lead3);
-        when(leadService.searchByNameOrEmail(eq("ivan"), isNull()))
-                .thenReturn(expectedLeads);
+    void homeWhenNoLeadsShouldReturnZeroCount() {
+        // Given
+        when(leadService.findAll()).thenReturn(List.of());
 
-        // Act & Assert
-        mockMvc.perform(get("/leads")
-                        .param("search", "ivan"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("leads/list"))
-                .andExpect(model().attributeExists("leads"))
-                .andExpect(model().attribute("leads", hasSize(2)))
-                .andExpect(model().attribute("leads", hasItems(lead1, lead3)))
-                .andExpect(model().attribute("search", "ivan"))
-                .andExpect(model().attribute("currentFilter", nullValue()));
+        // When
+        String result = leadController.home();
+
+        // Then
+        assertThat(result).isEqualTo("Spring Boot CRM is running! Leads count: 0");
+        verify(leadService).findAll();
+    }
+
+    // ==================== SHOW CREATE FORM TESTS ====================
+
+    @Test
+    void showCreateFormShouldAddAttributesAndReturnView() {
+        // When
+        String viewName = leadController.showCreateForm(model);
+
+        // Then
+        verify(model).addAttribute(eq("lead"), any(Lead.class));
+        verify(model).addAttribute("statuses", LeadStatus.values());
+        assertThat(viewName).isEqualTo("leads/create");
+    }
+
+    // ==================== SHOW LEADS TESTS ====================
+
+    @Test
+    void showLeadsWithSearchShouldCallSearchByNameOrEmail() {
+        // Given
+        String search = "test";
+        LeadStatus status = LeadStatus.NEW;
+        List<Lead> expectedLeads = Arrays.asList(testLead);
+        when(leadService.searchByNameOrEmail(search, status)).thenReturn(expectedLeads);
+
+        // When
+        String viewName = leadController.showLeads(search, status, model);
+
+        // Then
+        verify(leadService).searchByNameOrEmail(search, status);
+        verify(leadService, never()).findByStatus(any());
+        verify(model).addAttribute("leads", expectedLeads);
+        verify(model).addAttribute("search", search);
+        verify(model).addAttribute("currentFilter", status);
+        assertThat(viewName).isEqualTo("leads/list");
     }
 
     @Test
-    void testGetLeadsWithStatusParamReturnsOnlyLeadsWithStatusNew() throws Exception {
-        // Arrange
-        List<Lead> expectedLeads = Arrays.asList(lead1, lead4);
-        // Когда search == null, вызывается findLeads
-        when(leadService.findLeads(isNull(), isNull(), eq(LeadStatus.NEW)))
-                .thenReturn(expectedLeads);
+    void showLeadsWithEmptySearchShouldCallFindByStatus() {
+        // Given
+        String search = "";
+        LeadStatus status = LeadStatus.CONTACTED;
+        List<Lead> expectedLeads = Arrays.asList(testLead);
+        when(leadService.findByStatus(status)).thenReturn(expectedLeads);
 
-        // Act & Assert
-        mockMvc.perform(get("/leads")
-                        .param("status", "NEW"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("leads/list"))
-                .andExpect(model().attributeExists("leads"))
-                .andExpect(model().attribute("leads", hasSize(2)))
-                .andExpect(model().attribute("leads", hasItems(lead1, lead4)))
-                .andExpect(model().attribute("currentFilter", is(LeadStatus.NEW)))
-                .andExpect(model().attribute("search", nullValue()));
+        // When
+        String viewName = leadController.showLeads(search, status, model);
+
+        // Then
+        verify(leadService).findByStatus(status);
+        verify(leadService, never()).searchByNameOrEmail(any(), any());
+        verify(model).addAttribute("leads", expectedLeads);
+        verify(model).addAttribute("search", search);
+        verify(model).addAttribute("currentFilter", status);
+        assertThat(viewName).isEqualTo("leads/list");
     }
 
     @Test
-    void testGetLeadsWithoutParamsReturnsAllLeads() throws Exception {
-        // Arrange
-        List<Lead> allLeads = Arrays.asList(lead1, lead2, lead3, lead4, lead5);
-        // Когда search == null и status == null, вызывается findLeads с null параметрами
-        when(leadService.findLeads(isNull(), isNull(), isNull()))
-                .thenReturn(allLeads);
+    void showLeadsWithoutSearchShouldCallFindByStatus() {
+        // Given
+        LeadStatus status = LeadStatus.QUALIFIED;
+        List<Lead> expectedLeads = Arrays.asList(testLead);
+        when(leadService.findByStatus(status)).thenReturn(expectedLeads);
 
-        // Act & Assert
-        mockMvc.perform(get("/leads"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("leads/list"))
-                .andExpect(model().attributeExists("leads"))
-                .andExpect(model().attribute("leads", hasSize(5)))
-                .andExpect(model().attribute("leads", hasItems(lead1, lead2, lead3, lead4, lead5)))
-                .andExpect(model().attribute("search", nullValue()))
-                .andExpect(model().attribute("currentFilter", nullValue()));
+        // When
+        String viewName = leadController.showLeads(null, status, model);
+
+        // Then
+        verify(leadService).findByStatus(status);
+        verify(model).addAttribute("leads", expectedLeads);
+        verify(model).addAttribute("search", null);
+        verify(model).addAttribute("currentFilter", status);
+        assertThat(viewName).isEqualTo("leads/list");
     }
 
     @Test
-    void testGetLeadsWithSearchAndStatusParamsCombinesBothFilters() throws Exception {
-        // Arrange
-        List<Lead> expectedLeads = Arrays.asList(lead1);
-        // Когда есть search, вызывается searchByNameOrEmail
-        when(leadService.searchByNameOrEmail(eq("ivan"), eq(LeadStatus.NEW)))
-                .thenReturn(expectedLeads);
+    void showLeadsWithoutSearchAndStatusShouldCallFindByStatusWithNull() {
+        // Given
+        when(leadService.findByStatus(null)).thenReturn(Arrays.asList(testLead));
 
-        // Act & Assert
-        mockMvc.perform(get("/leads")
-                        .param("search", "ivan")
-                        .param("status", "NEW"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("leads/list"))
-                .andExpect(model().attributeExists("leads"))
-                .andExpect(model().attribute("leads", hasSize(1)))
-                .andExpect(model().attribute("leads", hasItem(lead1)))
-                .andExpect(model().attribute("search", "ivan"))
-                .andExpect(model().attribute("currentFilter", is(LeadStatus.NEW)));
+        // When
+        String viewName = leadController.showLeads(null, null, model);
+
+        // Then
+        verify(leadService).findByStatus(null);
+        verify(model).addAttribute(eq("leads"), anyList());
+        verify(model).addAttribute("search", null);
+        verify(model).addAttribute("currentFilter", null);
+        assertThat(viewName).isEqualTo("leads/list");
+    }
+
+    // ==================== CREATE LEAD TESTS ====================
+
+    @Test
+    void createLeadWithValidDataShouldRedirectToLeads() {
+        // Given
+        when(bindingResult.hasErrors()).thenReturn(false);
+        when(leadService.addLead(any(Lead.class))).thenReturn(testLead);
+
+        // When
+        String result = leadController.createLead(testLead, bindingResult, model);
+
+        // Then
+        verify(leadService).addLead(testLead);
+        verify(model, never()).addAttribute(anyString(), any());
+        assertThat(result).isEqualTo("redirect:/leads");
     }
 
     @Test
-    void testGetLeadsWithEmptySearchReturnsAllLeads() throws Exception {
-        // Arrange
-        List<Lead> allLeads = Arrays.asList(lead1, lead2, lead3, lead4, lead5);
-        // Пустая строка search не считается null, поэтому вызывается searchByNameOrEmail
-        when(leadService.findLeads(isNull(), isNull(), isNull()))
-                .thenReturn(allLeads);
+    void createLeadWithValidationErrorsShouldReturnCreateForm() {
+        // Given
+        when(bindingResult.hasErrors()).thenReturn(true);
 
-        // Act & Assert
-        mockMvc.perform(get("/leads")
-                        .param("search", ""))
-                .andExpect(status().isOk())
-                .andExpect(view().name("leads/list"))
-                .andExpect(model().attribute("leads", hasSize(5)))
-                .andExpect(model().attribute("leads", hasItems(lead1, lead2, lead3, lead4, lead5)))
-                .andExpect(model().attribute("search", ""))
-                .andExpect(model().attribute("currentFilter", nullValue()));
+        // When
+        String result = leadController.createLead(testLead, bindingResult, model);
+
+        // Then
+        verify(leadService, never()).addLead(any());
+        verify(model).addAttribute("statuses", LeadStatus.values());
+        assertThat(result).isEqualTo("leads/create");
     }
 
     @Test
-    void testGetLeadsWithNonExistentSearchReturnsEmptyList() throws Exception {
-        // Arrange
-        when(leadService.searchByNameOrEmail(eq("nonexistent"), isNull()))
-                .thenReturn(Collections.emptyList());
+    void createLeadWithDuplicateEmailShouldReturnCreateFormWithError() {
+        // Given
+        when(bindingResult.hasErrors()).thenReturn(false);
+        when(leadService.addLead(any(Lead.class)))
+                .thenThrow(new IllegalStateException("Lead with email already exists: test@example.com"));
 
-        // Act & Assert
-        mockMvc.perform(get("/leads")
-                        .param("search", "nonexistent"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("leads/list"))
-                .andExpect(model().attribute("leads", empty()))
-                .andExpect(model().attribute("leads", hasSize(0)))
-                .andExpect(model().attribute("search", "nonexistent"))
-                .andExpect(model().attribute("currentFilter", nullValue()));
+        // When
+        String result = leadController.createLead(testLead, bindingResult, model);
+
+        // Then
+        verify(leadService).addLead(testLead);
+        verify(model).addAttribute("error", "Lead with email already exists: test@example.com");
+        verify(model).addAttribute("statuses", LeadStatus.values());
+        assertThat(result).isEqualTo("leads/create");
+    }
+
+    // ==================== SHOW EDIT FORM TESTS ====================
+
+    @Test
+    void showEditFormWhenLeadExistsShouldReturnEditForm() {
+        // Given
+        when(leadService.findById(testId)).thenReturn(Optional.of(testLead));
+
+        // When
+        String viewName = leadController.showEditForm(testId, model);
+
+        // Then
+        verify(model).addAttribute("lead", testLead);
+        verify(model).addAttribute("statuses", LeadStatus.values());
+        assertThat(viewName).isEqualTo("leads/edit");
     }
 
     @Test
-    void testGetLeadsWithStatusContactedReturnsOnlyContactedLeads() throws Exception {
-        // Arrange
-        List<Lead> expectedLeads = Arrays.asList(lead2);
-        when(leadService.findLeads(isNull(), isNull(), eq(LeadStatus.CONTACTED)))
-                .thenReturn(expectedLeads);
+    void showEditFormWhenLeadNotFoundShouldThrowNotFoundException() {
+        // Given
+        when(leadService.findById(testId)).thenReturn(Optional.empty());
 
-        // Act & Assert
-        mockMvc.perform(get("/leads")
-                        .param("status", "CONTACTED"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("leads/list"))
-                .andExpect(model().attribute("leads", hasSize(1)))
-                .andExpect(model().attribute("leads", hasItem(lead2)))
-                .andExpect(model().attribute("currentFilter", is(LeadStatus.CONTACTED)))
-                .andExpect(model().attribute("search", nullValue()));
+        // When & Then
+        assertThatThrownBy(() -> leadController.showEditForm(testId, model))
+                .isInstanceOf(ResponseStatusException.class)
+                .satisfies(ex -> {
+                    ResponseStatusException responseEx = (ResponseStatusException) ex;
+                    assertThat(responseEx.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+                    assertThat(responseEx.getReason()).contains("Cannot find lead with id " + testId);
+                });
+    }
+
+    // ==================== UPDATE LEAD TESTS ====================
+
+    @Test
+    void updateLeadWithValidDataShouldRedirectToLeads() {
+        // Given
+        when(bindingResult.hasErrors()).thenReturn(false);
+
+        // When
+        String result = leadController.updateLead(testId, testLead, bindingResult, model);
+
+        // Then
+        verify(leadService).update(testId, testLead);
+        verify(model, never()).addAttribute(anyString(), any());
+        assertThat(result).isEqualTo("redirect:/leads");
     }
 
     @Test
-    void testGetLeadsWithStatusQualifiedReturnsOnlyQualifiedLeads() throws Exception {
-        // Arrange
-        List<Lead> expectedLeads = Arrays.asList(lead3);
-        when(leadService.findLeads(isNull(), isNull(), eq(LeadStatus.QUALIFIED)))
-                .thenReturn(expectedLeads);
+    void updateLeadWithValidationErrorsShouldReturnEditForm() {
+        // Given
+        when(bindingResult.hasErrors()).thenReturn(true);
 
-        // Act & Assert
-        mockMvc.perform(get("/leads")
-                        .param("status", "QUALIFIED"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("leads/list"))
-                .andExpect(model().attribute("leads", hasSize(1)))
-                .andExpect(model().attribute("leads", hasItem(lead3)))
-                .andExpect(model().attribute("currentFilter", is(LeadStatus.QUALIFIED)));
+        // When
+        String result = leadController.updateLead(testId, testLead, bindingResult, model);
+
+        // Then
+        verify(leadService, never()).update(any(), any());
+        verify(model).addAttribute("statuses", LeadStatus.values());
+        assertThat(result).isEqualTo("leads/edit");
+    }
+
+    // ==================== DELETE LEAD TESTS ====================
+
+    @Test
+    void deleteLeadShouldCallServiceAndRedirectToLeads() {
+        // When
+        String result = leadController.deleteLead(testId);
+
+        // Then
+        verify(leadService).delete(testId);
+        assertThat(result).isEqualTo("redirect:/leads");
+    }
+
+    // ==================== EDGE CASE TESTS ====================
+
+    @Test
+    void showLeadsShouldHandleBlankSearchString() {
+        // Given
+        String blankSearch = "   ";
+        // Исправлено: мокаем searchByNameOrEmail, потому что строка с пробелами не считается пустой
+        when(leadService.searchByNameOrEmail(blankSearch, null)).thenReturn(Arrays.asList(testLead));
+
+        // When
+        String viewName = leadController.showLeads(blankSearch, null, model);
+
+        // Then
+        verify(leadService).searchByNameOrEmail(blankSearch, null);
+        verify(leadService, never()).findByStatus(any());
+        verify(model).addAttribute(eq("leads"), anyList());
+        verify(model).addAttribute("search", blankSearch);
+        assertThat(viewName).isEqualTo("leads/list");
     }
 
     @Test
-    void testGetLeadsWithStatusLostReturnsOnlyLostLeads() throws Exception {
-        // Arrange
-        List<Lead> expectedLeads = Arrays.asList(lead5);
-        when(leadService.findLeads(isNull(), isNull(), eq(LeadStatus.LOST)))
-                .thenReturn(expectedLeads);
+    void showLeadsWithSearchAndNullStatusShouldCallSearchWithNullStatus() {
+        // Given
+        String search = "test";
+        when(leadService.searchByNameOrEmail(search, null)).thenReturn(Arrays.asList(testLead));
 
-        // Act & Assert
-        mockMvc.perform(get("/leads")
-                        .param("status", "LOST"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("leads/list"))
-                .andExpect(model().attribute("leads", hasSize(1)))
-                .andExpect(model().attribute("leads", hasItem(lead5)))
-                .andExpect(model().attribute("currentFilter", is(LeadStatus.LOST)));
+        // When
+        String viewName = leadController.showLeads(search, null, model);
+
+        // Then
+        verify(leadService).searchByNameOrEmail(search, null);
+        verify(model).addAttribute("currentFilter", null);
+        assertThat(viewName).isEqualTo("leads/list");
     }
-    @Test
-    void testCreateLeadWithInvalidEmailShouldReturnFormWithEmailError() throws Exception {
-        mockMvc.perform(post("/leads")
-                        .param("name", "John Doe")
-                        .param("email", "invalidemail")
-                        .param("company", "Test Company")
-                        .param("status", "NEW"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("leads/create"))
-                .andExpect(model().attributeHasFieldErrorCode("lead", "email", "Email"));
-    }
-
-    @Test
-    void testCreateLeadWithValidDataShouldRedirectToLeads() throws Exception {
-        when(leadService.addLead(any(), any(), any())).thenReturn(new Lead(
-                UUID.randomUUID(),
-                "John Doe",
-                "john@test.com",
-                LeadStatus.NEW
-        ));
-
-        mockMvc.perform(post("/leads")
-                        .param("name", "John Doe")
-                        .param("email", "john@test.com")
-                        .param("company", "Test Company")
-                        .param("status", "NEW"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/leads"));
-    }
-
-    @Test
-    void testCreateLeadWithDuplicateEmailShouldReturnFormWithError() throws Exception {
-        doThrow(new IllegalStateException("Lead with this email already exists"))
-                .when(leadService).addLead(any(), any(), any());
-
-        mockMvc.perform(post("/leads")
-                        .param("name", "John Doe")
-                        .param("email", "existing@test.com")
-                        .param("company", "Test Company")
-                        .param("status", "NEW"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("leads/create"))
-                .andExpect(model().attributeExists("error"))
-                .andExpect(model().attribute("statuses", LeadStatus.values()));
-    }
-
-    @Test
-    void testShowCreateFormShouldReturnCreateForm() throws Exception {
-        mockMvc.perform(get("/leads/new"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("leads/create"))
-                .andExpect(model().attributeExists("lead"))
-                .andExpect(model().attributeExists("statuses"));
-    }
-
-    @Test
-    void testShowLeadsShouldReturnLeadsList() throws Exception {
-        mockMvc.perform(get("/leads"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("leads/list"))
-                .andExpect(model().attributeExists("leads"));
-    }
-
-    @Test
-    void testShowLeadsWithSearchShouldReturnFilteredLeads() throws Exception {
-        mockMvc.perform(get("/leads")
-                        .param("search", "test")
-                        .param("status", "NEW"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("leads/list"))
-                .andExpect(model().attributeExists("leads"))
-                .andExpect(model().attribute("search", "test"))
-                .andExpect(model().attribute("currentFilter", LeadStatus.NEW));
-    }
-
-    @Test
-    void testShowEditFormWhenLeadExistsShouldReturnEditForm() throws Exception {
-        UUID leadId = UUID.randomUUID();
-        Lead existingLead = new Lead(leadId, "John Doe", "john@test.com", LeadStatus.NEW);
-
-        when(leadService.findById(leadId)).thenReturn(Optional.of(existingLead));
-
-        mockMvc.perform(get("/leads/{id}/edit", leadId))
-                .andExpect(status().isOk())
-                .andExpect(view().name("leads/edit"))
-                .andExpect(model().attributeExists("lead"))
-                .andExpect(model().attributeExists("statuses"));
-    }
-
-    @Test
-    void testShowEditFormWhenLeadNotFoundShouldReturn404() throws Exception {
-        UUID leadId = UUID.randomUUID();
-
-        when(leadService.findById(leadId)).thenReturn(Optional.empty());
-
-        mockMvc.perform(get("/leads/{id}/edit", leadId))
-                .andExpect(status().isNotFound());
-    }
-
-    @Test
-    void testUpdateLeadWithValidDataShouldRedirectToLeads() throws Exception {
-        UUID leadId = UUID.randomUUID();
-
-        mockMvc.perform(post("/leads/{id}", leadId)
-                        .param("name", "Updated Name")
-                        .param("email", "updated@test.com")
-                        .param("company", "Updated Company")
-                        .param("status", "CONTACTED"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/leads"));
-    }
-
-    @Test
-    void testUpdateLeadWithInvalidEmailShouldReturnFormWithError() throws Exception {
-        UUID leadId = UUID.randomUUID();
-
-        mockMvc.perform(post("/leads/{id}", leadId)
-                        .param("name", "Updated Name")
-                        .param("email", "invalidemail")
-                        .param("company", "Updated Company")
-                        .param("status", "CONTACTED"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("leads/edit"))
-                .andExpect(model().attributeHasFieldErrors("lead", "email"));
-    }
-
-    @Test
-    void testDeleteLeadWhenLeadExistsShouldRedirectToLeads() throws Exception {
-        UUID leadId = UUID.randomUUID();
-
-        when(leadService.findById(leadId)).thenReturn(Optional.of(new Lead(
-                leadId, "John Doe", "john@test.com", LeadStatus.NEW
-        )));
-
-        mockMvc.perform(post("/leads/{id}/delete", leadId))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/leads"));
-    }
-
-    @Test
-    void testDeleteLeadWhenLeadNotFoundShouldReturn404() throws Exception {
-        UUID leadId = UUID.randomUUID();
-
-        when(leadService.findById(leadId)).thenReturn(Optional.empty());
-
-        mockMvc.perform(post("/leads/{id}/delete", leadId))
-                .andExpect(status().isNotFound());
-    }
-
-    @Test
-    void testHomeShouldReturnWelcomeMessage() throws Exception {
-        when(leadService.findAll()).thenReturn(java.util.Collections.emptyList());
-
-        mockMvc.perform(get("/"))
-                .andExpect(status().isOk())
-                .andExpect(content().string("Spring Boot CRM is running! Beans created: 0 leads."));
-    }
-
 }
