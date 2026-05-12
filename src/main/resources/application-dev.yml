@@ -4,20 +4,17 @@ spring:
     username: postgres
     password: postgres
     driver-class-name: org.postgresql.Driver
-    
+
   jpa:
     database: POSTGRESQL
     hibernate:
       ddl-auto: validate
+    show-sql: true
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-        
+        format_sql: true
+
   sql:
     init:
-      mode: never
-      
-logging:
-  level:
-    org.hibernate.SQL: DEBUG
-    com.zaxxer.hikari: DEBUG
+      mode: always

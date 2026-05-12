@@ -1,4 +1,4 @@
-name: Java CI with Checkstyle and JaCoCo
+name: Java CI with Jacoco and Checkstyle
 
 on:
   push:
@@ -8,83 +8,35 @@ on:
   pull_request:
     branches:
       - master
-
-jobs:
+jobs: 
   build:
     runs-on: ubuntu-latest
-
-    # Добавляем PostgreSQL как сервис
-    services:
-      postgres:
-        image: postgres:17-alpine
-        env:
-          POSTGRES_DB: crm
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
+  
     steps:
-      - name: Сканирование кода
-        uses: actions/checkout@v4
+    - name: clone the code
+      uses: actions/checkout@v4
 
-      - name: Устанавливает права на выполнение для Gradle Wrapper в Linux-окружении GitHub Actions.
-        run: chmod +x gradlew
+    - name: give gradle permissions
+      run: chmod +x gradlew
 
-      - name: задаём требуемную версию JDK 25 (Temurin)
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '25'
-          cache: 'gradle'
+    - name: install java v4 (JDK 25)
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '25'
+        cache: 'gradle'
+    
+    - name: perform Checkstyle
+      run: ./gradlew --no-daemon checkstyleMain checkstyleTest
+  
+    - name: perform
+      run: ./gradlew --no-daemon test
 
-      - name: Ожидание готовности PostgreSQL
-        run: |
-          echo "Waiting for PostgreSQL to be ready..."
-          for i in {1..30}; do
-            if pg_isready -h localhost -p 5432 -U postgres; then
-              echo "PostgreSQL is ready!"
-              break
-            fi
-            echo "Waiting... (attempt $i/30)"
-            sleep 2
-          done
+    - name: create JaCoCo test report
+      run: ./gradlew --no-daemon JacocoTestReport
 
-      - name: Инициализация схемы базы данных
-        run: |
-          PGPASSWORD=postgres psql -h localhost -U postgres -d crm -f src/main/resources/schema.sql
-        env:
-          PGPASSWORD: postgres
+    - name: check test coverage threshold
+      run: ./gradlew --no-daemon JacocoCoverageVerification
 
-      - name: Проверка на соблюдение стиля кода
-        run: ./gradlew --no-daemon checkstyleMain checkstyleTest
-
-      - name: Запуск тестов
-        run: ./gradlew --no-daemon test
-        env:
-          SPRING_PROFILES_ACTIVE: dev
-          POSTGRES_HOST: localhost
-          POSTGRES_PORT: 5432
-          POSTGRES_DB: crm
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-
-      - name: Генерация отчёта покрытия тестами
-        run: ./gradlew --no-daemon jacocoTestReport
-        env:
-          SPRING_PROFILES_ACTIVE: dev
-
-      - name: Проверка порога покрытия (80%)
-        run: ./gradlew --no-daemon jacocoTestCoverageVerification
-        env:
-          SPRING_PROFILES_ACTIVE: dev
-
-      - name: Сборка проекта
-        run: ./gradlew --no-daemon build
-        env:
-          SPRING_PROFILES_ACTIVE: dev
+    - name: build the project
+      run: ./gradlew --no-daemon build

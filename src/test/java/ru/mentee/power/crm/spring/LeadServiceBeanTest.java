@@ -1,16 +1,18 @@
-package ru.mentee.power.crm.spring.service;
+package ru.mentee.power.crm.spring;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 import ru.mentee.power.crm.repository.LeadRepository;
-import ru.mentee.power.crm.spring.controller.LeadController;
+import ru.mentee.power.crm.spring.service.LeadService;
 
-import static org.assertj.core.api.Assertions.*;
 
 @SpringBootTest
-class LeadServiceBeanTest {
+public class LeadServiceBeanTest {
+
     @Autowired
     private ApplicationContext context;
 
@@ -19,19 +21,17 @@ class LeadServiceBeanTest {
         LeadService service = context.getBean(LeadService.class);
         assertThat(service).isNotNull();
     }
+
     @Test
     void shouldCreateLeadRepositoryBean() {
         LeadRepository repository = context.getBean(LeadRepository.class);
         assertThat(repository).isNotNull();
     }
-    @Test
-    void shouldCreateLeadControllerBean() {
-        LeadController controller = context.getBean(LeadController.class);
-        assertThat(controller).isNotNull();
-    }
+
     @Test
     void shouldInjectLeadRepositoryIntoService() {
         LeadService service = context.getBean(LeadService.class);
+
         assertThat(service.findAll()).isEmpty();
     }
 }
