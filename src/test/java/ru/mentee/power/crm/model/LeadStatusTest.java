@@ -8,14 +8,14 @@ class LeadStatusTest {
     @Test
     void testEnumValues() {
         // Проверяем количество значений
-        assertEquals(5, LeadStatus.values().length);
+        assertEquals(4, LeadStatus.values().length);
 
         // Проверяем наличие всех ожидаемых значений
         assertTrue(containsConstant(LeadStatus.NEW));
         assertTrue(containsConstant(LeadStatus.CONTACTED));
         assertTrue(containsConstant(LeadStatus.QUALIFIED));
         assertTrue(containsConstant(LeadStatus.LOST));
-        assertTrue(containsConstant(LeadStatus.CONFIDENTIAL));
+
     }
 
     @Test
@@ -26,7 +26,6 @@ class LeadStatusTest {
         assertEquals(LeadStatus.CONTACTED, values[1]);
         assertEquals(LeadStatus.QUALIFIED, values[2]);
         assertEquals(LeadStatus.LOST, values[3]);
-        assertEquals(LeadStatus.CONFIDENTIAL, values[4]);
     }
 
     @Test
@@ -36,7 +35,7 @@ class LeadStatusTest {
         assertEquals(LeadStatus.CONTACTED, LeadStatus.valueOf("CONTACTED"));
         assertEquals(LeadStatus.QUALIFIED, LeadStatus.valueOf("QUALIFIED"));
         assertEquals(LeadStatus.LOST, LeadStatus.valueOf("LOST"));
-        assertEquals(LeadStatus.CONFIDENTIAL, LeadStatus.valueOf("CONFIDENTIAL"));
+
     }
 
     @Test
@@ -54,7 +53,7 @@ class LeadStatusTest {
         assertEquals("CONTACTED", LeadStatus.CONTACTED.toString());
         assertEquals("QUALIFIED", LeadStatus.QUALIFIED.toString());
         assertEquals("LOST", LeadStatus.LOST.toString());
-        assertEquals("CONFIDENTIAL", LeadStatus.CONFIDENTIAL.toString());
+
     }
 
     @Test

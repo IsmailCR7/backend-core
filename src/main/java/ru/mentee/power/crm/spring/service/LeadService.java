@@ -1,75 +1,97 @@
 package ru.mentee.power.crm.spring.service;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import jakarta.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import ru.mentee.power.crm.model.Lead;
 import ru.mentee.power.crm.model.LeadStatus;
 import ru.mentee.power.crm.repository.LeadRepository;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 
-@Slf4j
 @Service
-@RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class LeadService {
-
+    private static final Logger LOG = LoggerFactory.getLogger(LeadService.class);
     private final LeadRepository repository;
 
-    @Transactional
-    public Lead addLead(String email, String company, LeadStatus status) {
+    public LeadService(LeadRepository repository) {
+        this.repository = repository;
+        LOG.info("LeadService constructor called");
+    }
+
+    @PostConstruct
+    void init() {
+        LOG.info("LeadService @PostConstruct init() called - Bean lifecycle phase");
+    }
+
+    public Lead addLead(String name, String email, String company, LeadStatus status) {
+
         Optional<Lead> existing = repository.findByEmail(email);
         if (existing.isPresent()) {
             throw new IllegalStateException("Lead with email already exists: " + email);
         }
 
-        Lead lead = new Lead(email, company, status);
-        log.info("Saving new lead: {}", lead);
+        Lead lead = new Lead(
+                name,
+                email,
+                company,
+                status
+        );
+
         return repository.save(lead);
     }
 
-    @Transactional
-    public Lead addLead(Lead lead) {
-        return addLead(lead.getEmail(), lead.getCompany(), lead.getStatus());
+    public Lead addLead(String email, String company, LeadStatus status) {
+
+        Optional<Lead> existing = repository.findByEmail(email);
+        if (existing.isPresent()) {
+            throw new IllegalStateException("Lead with email already exists: " + email);
+        }
+
+        Lead lead = new Lead(
+                email,
+                company,
+                status
+        );
+
+        return repository.save(lead);
     }
 
-    @Transactional
-    public Lead update(UUID id, Lead updateLead) {
-        Lead existing = repository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Can't find lead with id: " + id));
+    public Lead update(UUID id, Lead updatedLead) {
 
-        existing.setEmail(updateLead.getEmail());
-        existing.setCompany(updateLead.getCompany());
-        existing.setStatus(updateLead.getStatus());
-
-        log.info("Updating lead: {}", existing);
-        return repository.save(existing);
-    }
-
-    @Transactional
-    public void delete(UUID id) {
-        if (!repository.existsById(id)) {
+        Optional<Lead> existing = repository.findById(id);
+        if (existing.isEmpty()) {
             throw new ResponseStatusException(
                     HttpStatus.NOT_FOUND,
-                    "Can't find lead with id: " + id);
+                    "Cannot find lead with id " + id);
         }
-        repository.deleteById(id);
-        log.info("Deleted lead with id: {}", id);
+
+        existing.get().setName(updatedLead.name());
+        existing.get().setEmail(updatedLead.email());
+        existing.get().setCompany(updatedLead.company());
+        existing.get().setStatus(updatedLead.status());
+
+        return repository.save(existing.get());
+    }
+
+    public void delete(UUID id) {
+        if (repository.findById(id).isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                    "Lead with id = " + id + "not exists!");
+        } else {
+            repository.deleteById(id);
+        }
     }
 
     public List<Lead> findAll() {
         return repository.findAll();
-    }
-
-    public List<Lead> findByStatus(LeadStatus status) {
-        return repository.findByStatus(status);
     }
 
     public Optional<Lead> findById(UUID id) {
@@ -77,22 +99,29 @@ public class LeadService {
     }
 
     public Optional<Lead> findByEmail(String email) {
-        return repository.findByEmail(email);
+        return  repository.findByEmail(email);
     }
 
-    public List<Lead> searchByNameOrEmail(String search, LeadStatus status) {
-        List<Lead> allLeads = repository.findAll();
+    public List<Lead> findByStatus(LeadStatus status) {
+        return  repository.findAll().stream()
+                .filter(lead -> lead.status().equals(status))
+                .collect(Collectors.toList());
+    }
 
-        return allLeads.stream()
-                .filter(lead -> {
-                    if (search != null && !search.isBlank()) {
-                        String searchLower = search.toLowerCase();
-                        return lead.getEmail().toLowerCase().contains(searchLower) ||
-                                lead.getCompany().toLowerCase().contains(searchLower);
-                    }
-                    return true;
-                })
-                .filter(lead -> status == null || lead.getStatus() == status)
-                .toList();
+    public List<Lead> findLeads(String name, String email, String company, LeadStatus status) {
+        Stream<Lead> stream = repository.findAll().stream();
+        if (name != null && !name.isBlank()) {
+            stream = stream.filter(lead -> lead.name().toLowerCase().contains(name.toLowerCase()));
+        }
+        if (email != null && !email.isBlank()) {
+            stream = stream.filter(lead -> lead.email().toLowerCase().contains(email.toLowerCase()));
+        }
+        if (company != null && !company.isBlank()) {
+            stream = stream.filter(lead -> lead.company().toLowerCase().contains(company.toLowerCase()));
+        }
+        if (status != null) {
+            stream = stream.filter(lead -> lead.status().equals(status));
+        }
+        return stream.collect(Collectors.toList());
     }
 }

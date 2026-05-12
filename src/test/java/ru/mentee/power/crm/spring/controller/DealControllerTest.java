@@ -58,7 +58,7 @@ class DealControllerTest {
         now = LocalDateTime.now();
 
         // Используем правильный конструктор Lead: (id, email, company, status, createdAt)
-        testLead = new Lead(testLeadId, "test@example.com", "Test Company", LeadStatus.NEW, now);
+        testLead = new Lead(testLeadId, "test@example.com", "Test Company", LeadStatus.NEW);
 
         // Используем правильный конструктор Deal: (id, leadId, amount, status, createdAt)
         testDeal = new Deal(testDealId, testLeadId, testAmount, DealStatus.NEW, now);
@@ -225,7 +225,7 @@ class DealControllerTest {
     void showConvertFormShouldHandleMultipleCalls() {
         // Given
         UUID secondLeadId = UUID.randomUUID();
-        Lead secondLead = new Lead(secondLeadId, "second@example.com", "Second Company", LeadStatus.CONTACTED, now);
+        Lead secondLead = new Lead(secondLeadId, "second@example.com", "Second Company", LeadStatus.CONTACTED);
 
         when(leadService.findById(testLeadId)).thenReturn(Optional.of(testLead));
         when(leadService.findById(secondLeadId)).thenReturn(Optional.of(secondLead));

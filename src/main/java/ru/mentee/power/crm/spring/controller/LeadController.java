@@ -10,12 +10,16 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.server.ResponseStatusException;
 import ru.mentee.power.crm.model.Lead;
 import ru.mentee.power.crm.model.LeadStatus;
 import ru.mentee.power.crm.spring.service.LeadService;
-import java.util.UUID;
 
 @Controller
 @RequiredArgsConstructor
@@ -25,78 +29,96 @@ public class LeadController {
     @GetMapping
     @ResponseBody
     public String home() {
-        return "Spring Boot CRM is running! Leads count: " + leadService.findAll().size();
-    }
-
-    @GetMapping("/leads/new")
-    public String showCreateForm(Model model) {
-        model.addAttribute("lead", new Lead());
-        model.addAttribute("statuses", LeadStatus.values());
-        return "leads/create";
+        return "Spring Boot CRM is running! Leads in Database: "
+                + leadService.findAll().size() + " leads.";
     }
 
     @GetMapping("/leads")
-    public String showLeads(@RequestParam(required = false) String search,
-                            @RequestParam(required = false) LeadStatus status,
-                            Model model) {
-        List<Lead> leads;
-        if (search != null && !search.isEmpty()) {
-            leads = leadService.searchByNameOrEmail(search, status);
-        } else {
-            leads = leadService.findByStatus(status);
-        }
+    public String showLeads(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String company,
+            @RequestParam(required = false) LeadStatus status,
+            Model model) {
+        List<Lead> leads = leadService.findLeads(name, email, company, status);
 
         model.addAttribute("leads", leads);
-        model.addAttribute("search", search);
-        model.addAttribute("currentFilter", status);
+        model.addAttribute("email", email);
+        model.addAttribute("company", company);
+        model.addAttribute("status", status);
+
         return "leads/list";
     }
 
+    //форма создания лида
+    @GetMapping("/leads/new")
+    public String showCreateForm(Model model) {
+        model.addAttribute("lead", new Lead("", "", "", LeadStatus.NEW));
+        return "leads/create";
+    }
+
+    //создание лида
     @PostMapping("/leads")
-    public String createLead(@Valid @ModelAttribute("lead") Lead lead,
-                             BindingResult result,
-                             Model model) {
+    public String createLead(@Valid @ModelAttribute Lead lead, BindingResult result, Model model) {
         if (result.hasErrors()) {
-            model.addAttribute("statuses", LeadStatus.values());
-            return "leads/create";
-        }
-        try {
-            leadService.addLead(lead);
+            model.addAttribute("errors", result);
+            return "leads/form";
+        } else {
+            leadService.addLead(lead.name(), lead.email(), lead.company(), lead.status());
             return "redirect:/leads";
-        } catch (IllegalStateException e) {
-            model.addAttribute("error", e.getMessage());
-            model.addAttribute("statuses", LeadStatus.values());
-            return "leads/create";
         }
     }
 
+    //форма обновления лида
     @GetMapping("/leads/{id}/edit")
     public String showEditForm(@PathVariable UUID id, Model model) {
-        Lead lead = leadService.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Cannot find lead with id " + id));
-        model.addAttribute("lead", lead);
-        model.addAttribute("statuses", LeadStatus.values());
+
+        Optional<Lead> lead = leadService.findById(id);
+        if (lead.isEmpty()) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "Cannot find lead with id " + id);
+        } else {
+            model.addAttribute("lead", lead.get());
+        }
         return "leads/edit";
     }
 
+    //обновление лида
     @PostMapping("/leads/{id}")
-    public String updateLead(@PathVariable UUID id,
-                             @Valid @ModelAttribute("lead") Lead lead,
-                             BindingResult result,
-                             Model model) {
-        if (result.hasErrors()) {
-            model.addAttribute("statuses", LeadStatus.values());
-            return "leads/edit";
+    public String updateLead(@PathVariable UUID id, @Valid @ModelAttribute Lead lead,
+                             BindingResult result, Model model) {
+
+        //избегаю Direct endpoint invocation
+        if (leadService.findById(id).isEmpty()) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "Cannot find lead with id " + id);
+        } else {
+
+            if (result.hasErrors()) {
+                model.addAttribute("errors", result);
+                return "leads/form";
+            } else {
+                leadService.update(id, lead);
+                return "redirect:/leads";
+            }
+
         }
-        leadService.update(id, lead);
-        return "redirect:/leads";
     }
 
+    //удаление лида
     @PostMapping("/leads/{id}/delete")
     public String deleteLead(@PathVariable UUID id) {
-        leadService.delete(id);
-        return "redirect:/leads";
+        if (leadService.findById(id).isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                    "Lead with id = " + id + " not exists");
+        } else {
+            leadService.delete(id);
+            return "redirect:/leads";
+        }
     }
+
 }
