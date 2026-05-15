@@ -6,6 +6,9 @@ import java.util.UUID;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -24,101 +27,205 @@ import ru.mentee.power.crm.spring.service.LeadService;
 @Controller
 @RequiredArgsConstructor
 public class LeadController {
+    private static final Logger LOG = LoggerFactory.getLogger(LeadController.class);
     private final LeadService leadService;
+
+    // ===== ДОМАШНЯЯ СТРАНИЦА =====
 
     @GetMapping
     @ResponseBody
     public String home() {
-        return "Spring Boot CRM is running! Leads in Database: "
-                + leadService.findAll().size() + " leads.";
+        long leadCount = leadService.countByStatus(null); // или leadService.findAll().size()
+        return "Spring Boot CRM is running! Leads in Database: " + leadCount + " leads.";
     }
 
+    // ===== ПОКАЗ ВСЕХ ЛИДОВ (с пагинацией и фильтрацией) =====
+
+    /**
+     * Показывает список лидов с возможностью фильтрации и пагинации.
+     *
+     * @param name фильтр по имени (частичное совпадение)
+     * @param email фильтр по email (частичное совпадение)
+     * @param company фильтр по компании (частичное совпадение)
+     * @param status фильтр по статусу (точное совпадение)
+     * @param page номер страницы (начиная с 0, по умолчанию 0)
+     * @param size размер страницы (по умолчанию 20)
+     * @param model модель для передачи данных в представление
+     */
     @GetMapping("/leads")
     public String showLeads(
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String email,
             @RequestParam(required = false) String company,
             @RequestParam(required = false) LeadStatus status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
             Model model) {
-        List<Lead> leads = leadService.findLeads(name, email, company, status);
+
+        // Используем улучшенный метод поиска (без фильтрации в памяти)
+        List<Lead> leads = leadService.searchLeads(name, email, company, status);
+
+        // Альтернатива с пагинацией (раскомментируй, если хочешь использовать)
+        // Page<Lead> leadPage = leadService.findLeadsPaged(name, email, company, status, page, size);
 
         model.addAttribute("leads", leads);
+        model.addAttribute("name", name);
         model.addAttribute("email", email);
         model.addAttribute("company", company);
         model.addAttribute("status", status);
+        model.addAttribute("statuses", LeadStatus.values()); // для выпадающего списка
+
+        // Для пагинации (если используешь Page)
+        // model.addAttribute("currentPage", page);
+        // model.addAttribute("totalPages", leadPage.getTotalPages());
+        // model.addAttribute("totalElements", leadPage.getTotalElements());
+
+        LOG.info("Displaying {} leads with filters - name: {}, email: {}, company: {}, status: {}",
+                leads.size(), name, email, company, status);
 
         return "leads/list";
     }
 
-    //форма создания лида
+    // ===== СОЗДАНИЕ ЛИДА =====
+
+    /**
+     * Показывает форму для создания нового лида.
+     */
     @GetMapping("/leads/new")
     public String showCreateForm(Model model) {
         model.addAttribute("lead", new Lead("", "", "", LeadStatus.NEW));
+        model.addAttribute("statuses", LeadStatus.values());
+        model.addAttribute("isEdit", false); // для определения режима формы
         return "leads/create";
     }
 
-    //создание лида
+    /**
+     * Обрабатывает создание нового лида.
+     */
     @PostMapping("/leads")
-    public String createLead(@Valid @ModelAttribute Lead lead, BindingResult result, Model model) {
+    public String createLead(@Valid @ModelAttribute Lead lead,
+                             BindingResult result,
+                             Model model) {
+
         if (result.hasErrors()) {
             model.addAttribute("errors", result);
-            return "leads/form";
-        } else {
+            model.addAttribute("statuses", LeadStatus.values());
+            model.addAttribute("isEdit", false);
+            LOG.warn("Lead creation failed due to validation errors: {}", result.getAllErrors());
+            return "leads/create"; // ← исправлено: возвращаем create, а не form
+        }
+
+        try {
             leadService.addLead(lead.name(), lead.email(), lead.company(), lead.status());
+            LOG.info("Successfully created lead with email: {}", lead.email());
             return "redirect:/leads";
+        } catch (IllegalStateException e) {
+            // Обработка ошибки дублирования email
+            model.addAttribute("errorMessage", e.getMessage());
+            model.addAttribute("statuses", LeadStatus.values());
+            model.addAttribute("isEdit", false);
+            LOG.error("Failed to create lead: {}", e.getMessage());
+            return "leads/create";
         }
     }
 
-    //форма обновления лида
+    // ===== РЕДАКТИРОВАНИЕ ЛИДА =====
+
+    /**
+     * Показывает форму для редактирования лида.
+     */
     @GetMapping("/leads/{id}/edit")
     public String showEditForm(@PathVariable UUID id, Model model) {
-
-        Optional<Lead> lead = leadService.findById(id);
-        if (lead.isEmpty()) {
-
-            throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND,
-                    "Cannot find lead with id " + id);
-        } else {
-            model.addAttribute("lead", lead.get());
-        }
+        Lead lead = findLeadOrThrow(id);
+        model.addAttribute("lead", lead);
+        model.addAttribute("statuses", LeadStatus.values());
+        model.addAttribute("isEdit", true);
         return "leads/edit";
     }
 
-    //обновление лида
+    /**
+     * Обрабатывает обновление лида.
+     */
     @PostMapping("/leads/{id}")
-    public String updateLead(@PathVariable UUID id, @Valid @ModelAttribute Lead lead,
-                             BindingResult result, Model model) {
+    public String updateLead(@PathVariable UUID id,
+                             @Valid @ModelAttribute Lead lead,
+                             BindingResult result,
+                             Model model) {
 
-        //избегаю Direct endpoint invocation
-        if (leadService.findById(id).isEmpty()) {
+        // Проверяем, существует ли лид
+        findLeadOrThrow(id);
 
-            throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND,
-                    "Cannot find lead with id " + id);
-        } else {
+        if (result.hasErrors()) {
+            model.addAttribute("errors", result);
+            model.addAttribute("statuses", LeadStatus.values());
+            model.addAttribute("isEdit", true);
+            LOG.warn("Lead update failed for id {} due to validation errors: {}", id, result.getAllErrors());
+            return "leads/edit";
+        }
 
-            if (result.hasErrors()) {
-                model.addAttribute("errors", result);
-                return "leads/form";
-            } else {
-                leadService.update(id, lead);
-                return "redirect:/leads";
-            }
-
+        try {
+            leadService.update(id, lead);
+            LOG.info("Successfully updated lead with id: {}", id);
+            return "redirect:/leads";
+        } catch (IllegalStateException e) {
+            model.addAttribute("errorMessage", e.getMessage());
+            model.addAttribute("statuses", LeadStatus.values());
+            model.addAttribute("isEdit", true);
+            LOG.error("Failed to update lead with id {}: {}", id, e.getMessage());
+            return "leads/edit";
         }
     }
 
-    //удаление лида
+    // ===== УДАЛЕНИЕ ЛИДА =====
+
+    /**
+     * Удаляет лида по ID.
+     */
     @PostMapping("/leads/{id}/delete")
     public String deleteLead(@PathVariable UUID id) {
-        if (leadService.findById(id).isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
-                    "Lead with id = " + id + " not exists");
-        } else {
-            leadService.delete(id);
-            return "redirect:/leads";
-        }
+        findLeadOrThrow(id); // проверяем существование
+        leadService.delete(id);
+        LOG.info("Successfully deleted lead with id: {}", id);
+        return "redirect:/leads";
     }
 
+    // ===== API ENDPOINTS (для AJAX/JSON запросов) =====
+
+    /**
+     * REST API endpoint для получения лида по ID (возвращает JSON).
+     */
+    @GetMapping("/api/leads/{id}")
+    @ResponseBody
+    public Lead getLeadApi(@PathVariable UUID id) {
+        return findLeadOrThrow(id);
+    }
+
+    /**
+     * REST API endpoint для поиска лидов (возвращает JSON).
+     */
+    @GetMapping("/api/leads/search")
+    @ResponseBody
+    public List<Lead> searchLeadsApi(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String company,
+            @RequestParam(required = false) LeadStatus status) {
+        return leadService.searchLeads(name, email, company, status);
+    }
+
+    // ===== ВСПОМОГАТЕЛЬНЫЕ ПРИВАТНЫЕ МЕТОДЫ =====
+
+    /**
+     * Находит лида по ID или выбрасывает исключение 404.
+     */
+    private Lead findLeadOrThrow(UUID id) {
+        return leadService.findById(id)
+                .orElseThrow(() -> {
+                    LOG.warn("Lead with id {} not found", id);
+                    return new ResponseStatusException(
+                            HttpStatus.NOT_FOUND,
+                            "Cannot find lead with id " + id
+                    );
+                });
+    }
 }
