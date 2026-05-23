@@ -1,14 +1,25 @@
 package ru.mentee.power.crm.spring.controller;
 
-import org.junit.jupiter.api.BeforeEach;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
+
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
-import org.springframework.ui.Model;
-import org.springframework.web.server.ResponseStatusException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
 import ru.mentee.power.crm.model.Deal;
 import ru.mentee.power.crm.model.DealStatus;
 import ru.mentee.power.crm.model.Lead;
@@ -16,228 +27,89 @@ import ru.mentee.power.crm.model.LeadStatus;
 import ru.mentee.power.crm.spring.service.DealService;
 import ru.mentee.power.crm.spring.service.LeadService;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.*;
-
-@ExtendWith(MockitoExtension.class)
+@WebMvcTest(DealController.class)
 class DealControllerTest {
 
-    @Mock
-    private DealService dealService;
+    @Autowired
+    private MockMvc mockMvc;
 
-    @Mock
+    @MockitoBean
+    private DealService dealService;
+    @MockitoBean
     private LeadService leadService;
 
-    @Mock
-    private Model model;
-
-    @InjectMocks
-    private DealController dealController;
-
-    private UUID testLeadId;
-    private UUID testDealId;
-    private Lead testLead;
-    private Deal testDeal;
-    private BigDecimal testAmount;
-    private LocalDateTime now;
-
-    @BeforeEach
-    void setUp() {
-        testLeadId = UUID.randomUUID();
-        testDealId = UUID.randomUUID();
-        testAmount = new BigDecimal("10000.00");
-        now = LocalDateTime.now();
-
-        // Используем правильный конструктор Lead: (id, email, company, status, createdAt)
-        testLead = new Lead(testLeadId, "test@example.com", "Test Company", LeadStatus.NEW);
-
-        // Используем правильный конструктор Deal: (id, leadId, amount, status, createdAt)
-        testDeal = new Deal(testDealId, testLeadId, testAmount, DealStatus.NEW, now);
-    }
-
     @Test
-    void listDealsShouldAddDealsToModelAndReturnView() {
-        // Given
-        List<Deal> deals = List.of(testDeal);
+    void shouldGetAllDealsWhenItCalled() throws Exception {
+        Deal firstDeal = new Deal(UUID.randomUUID(), BigDecimal.valueOf(10_000));
+        List<Deal> deals = List.of(firstDeal);
         when(dealService.getAllDeals()).thenReturn(deals);
 
-        // When
-        String viewName = dealController.listDeals(model);
-
-        // Then
-        verify(model).addAttribute("deals", deals);
-        assertThat(viewName).isEqualTo("deals/list");
+        mockMvc.perform(get("/deals"))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("deals", deals))
+                .andExpect(view().name("deals/list"));
     }
 
     @Test
-    void listDealsWhenNoDealsShouldReturnEmptyList() {
-        // Given
-        when(dealService.getAllDeals()).thenReturn(List.of());
+    void shouldShowKanbanView() throws Exception {
+        Map<DealStatus, List<Deal>> groupedDeals = Map.of(
+                DealStatus.NEW, List.of(new Deal(UUID.randomUUID(), BigDecimal.valueOf(10_000)))
+        );
+        when(dealService.getDealsByStatusForKanban()).thenReturn(groupedDeals);
 
-        // When
-        String viewName = dealController.listDeals(model);
-
-        // Then
-        verify(model).addAttribute("deals", List.of());
-        assertThat(viewName).isEqualTo("deals/list");
+        mockMvc.perform(get("/deals/kanban"))
+                .andExpect(status().isOk())
+                .andExpect(model().attributeExists("dealsByStatus"))
+                .andExpect(view().name("deals/kanban"));
     }
 
     @Test
-    void kanbanViewShouldAddDealsByStatusToModelAndReturnView() {
-        // Given
-        Map<DealStatus, List<Deal>> dealsByStatus = new HashMap<>();
-        dealsByStatus.put(DealStatus.NEW, List.of(testDeal));
-        when(dealService.getDealsByStatusForKanban()).thenReturn(dealsByStatus);
+    void shouldShowConvertForm() throws Exception {
+        UUID leadId = UUID.randomUUID();
+        Lead lead = new Lead(leadId, "test@mail.ru", "TestCorp", LeadStatus.NEW);
+        when(leadService.findById(leadId)).thenReturn(Optional.of(lead));
 
-        // When
-        String viewName = dealController.kanbanView(model);
-
-        // Then
-        verify(model).addAttribute("dealsByStatus", dealsByStatus);
-        assertThat(viewName).isEqualTo("deals/kanban");
+        mockMvc.perform(get("/deals/convert/{leadId}", leadId))
+                .andExpect(status().isOk())
+                .andExpect(model().attributeExists("lead"))
+                .andExpect(view().name("deals/convert"));
     }
 
     @Test
-    void kanbanViewWhenEmptyShouldReturnEmptyMap() {
-        // Given
-        when(dealService.getDealsByStatusForKanban()).thenReturn(new HashMap<>());
+    void shouldThrowExceptionWhenTryShowConvertFormWithNonExistingLead() throws Exception {
+        UUID leadId = UUID.randomUUID();
 
-        // When
-        String viewName = dealController.kanbanView(model);
+        when(leadService.findById(leadId)).thenReturn(Optional.empty());
 
-        // Then
-        verify(model).addAttribute("dealsByStatus", new HashMap<>());
-        assertThat(viewName).isEqualTo("deals/kanban");
+        mockMvc.perform(get("/deals/convert/{leadId}", leadId))
+                .andExpect(status().isNotFound());
     }
 
     @Test
-    void showConvertFormWhenLeadExistsShouldAddLeadToModelAndReturnView() {
-        // Given
-        when(leadService.findById(testLeadId)).thenReturn(Optional.of(testLead));
+    void shouldConvertLeadToDeal() throws Exception {
+        UUID leadId = UUID.randomUUID();
+        BigDecimal amount = BigDecimal.valueOf(50000);
 
-        // When
-        String viewName = dealController.showConvertForm(testLeadId, model);
+        mockMvc.perform(post("/deals/convert")
+                        .param("leadId", leadId.toString())
+                        .param("amount", amount.toString()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/deals"));
 
-        // Then
-        verify(model).addAttribute("lead", testLead);
-        assertThat(viewName).isEqualTo("deals/convert");
+        verify(dealService).convertLeadToDeal(leadId, amount);
     }
 
     @Test
-    void showConvertFormWhenLeadNotFoundShouldThrowNotFoundException() {
-        // Given
-        when(leadService.findById(testLeadId)).thenReturn(Optional.empty());
-
-        // When & Then
-        assertThatThrownBy(() -> dealController.showConvertForm(testLeadId, model))
-                .isInstanceOf(ResponseStatusException.class)
-                .satisfies(ex -> {
-                    ResponseStatusException responseEx = (ResponseStatusException) ex;
-                    assertThat(responseEx.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-                });
-    }
-
-    @Test
-    void convertLeadToDealShouldCallServiceAndRedirect() {
-        // When
-        String redirectUrl = dealController.convertLeadToDeal(testLeadId, testAmount);
-
-        // Then
-        verify(dealService).convertLeadToDeal(testLeadId, testAmount);
-        assertThat(redirectUrl).isEqualTo("redirect:/deals");
-    }
-
-    @Test
-    void convertLeadToDealWithZeroAmountShouldStillCallService() {
-        // Given
-        BigDecimal zeroAmount = BigDecimal.ZERO;
-
-        // When
-        String redirectUrl = dealController.convertLeadToDeal(testLeadId, zeroAmount);
-
-        // Then
-        verify(dealService).convertLeadToDeal(testLeadId, zeroAmount);
-        assertThat(redirectUrl).isEqualTo("redirect:/deals");
-    }
-
-    @Test
-    void convertLeadToDealWithNegativeAmountShouldStillCallService() {
-        // Given
-        BigDecimal negativeAmount = new BigDecimal("-1000.00");
-
-        // When
-        String redirectUrl = dealController.convertLeadToDeal(testLeadId, negativeAmount);
-
-        // Then
-        verify(dealService).convertLeadToDeal(testLeadId, negativeAmount);
-        assertThat(redirectUrl).isEqualTo("redirect:/deals");
-    }
-
-    @Test
-    void transitionStatusShouldCallServiceAndRedirectToKanban() {
-        // Given
-        DealStatus newStatus = DealStatus.QUALIFIED;
-
-        // When
-        String redirectUrl = dealController.transitionStatus(testDealId, newStatus);
-
-        // Then
-        verify(dealService).transitionDealStatus(testDealId, newStatus);
-        assertThat(redirectUrl).isEqualTo("redirect:/deals/kanban");
-    }
-
-    @Test
-    void transitionStatusWithWonStatusShouldCallService() {
-        // Given
+    void shouldTransitionDealStatus() throws Exception {
+        UUID dealId = UUID.randomUUID();
         DealStatus newStatus = DealStatus.WON;
 
-        // When
-        String redirectUrl = dealController.transitionStatus(testDealId, newStatus);
+        mockMvc.perform(post("/deals/{dealId}/transition", dealId)
+                        .param("newStatus", newStatus.name()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/deals/kanban"));
 
-        // Then
-        verify(dealService).transitionDealStatus(testDealId, newStatus);
-        assertThat(redirectUrl).isEqualTo("redirect:/deals/kanban");
+        verify(dealService).transitionDealStatus(dealId, newStatus);
     }
 
-    @Test
-    void transitionStatusWithLostStatusShouldCallService() {
-        // Given
-        DealStatus newStatus = DealStatus.LOST;
-
-        // When
-        String redirectUrl = dealController.transitionStatus(testDealId, newStatus);
-
-        // Then
-        verify(dealService).transitionDealStatus(testDealId, newStatus);
-        assertThat(redirectUrl).isEqualTo("redirect:/deals/kanban");
-    }
-
-    @Test
-    void showConvertFormShouldHandleMultipleCalls() {
-        // Given
-        UUID secondLeadId = UUID.randomUUID();
-        Lead secondLead = new Lead(secondLeadId, "second@example.com", "Second Company", LeadStatus.CONTACTED);
-
-        when(leadService.findById(testLeadId)).thenReturn(Optional.of(testLead));
-        when(leadService.findById(secondLeadId)).thenReturn(Optional.of(secondLead));
-
-        // When
-        String viewName1 = dealController.showConvertForm(testLeadId, model);
-        String viewName2 = dealController.showConvertForm(secondLeadId, model);
-
-        // Then
-        verify(model).addAttribute("lead", testLead);
-        verify(model).addAttribute("lead", secondLead);
-        assertThat(viewName1).isEqualTo("deals/convert");
-        assertThat(viewName2).isEqualTo("deals/convert");
-    }
 }

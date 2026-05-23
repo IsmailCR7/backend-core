@@ -11,7 +11,6 @@ import ru.mentee.power.crm.model.Lead;
 import ru.mentee.power.crm.model.LeadStatus;
 
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 
@@ -108,24 +107,6 @@ class LeadRepositoryTest {
         List<Lead> acmeNewLeads = repository.findByStatusAndCompany(LeadStatus.NEW, "ACME Corp");
         assertThat(acmeNewLeads).hasSize(2);
     }
-
-//    @Test
-//    void findByStatusOrderByCreatedAtDescShouldReturnNewestFirst() {
-//        List<Lead> newLeads = repository.findByStatusOrderByCreatedAtDesc(LeadStatus.NEW);
-//
-//        assertThat(newLeads).hasSize(2);
-//
-//        // Выведем для проверки (опционально)
-//        System.out.println("=== Сортировка NEW лидов ===");
-//        for (Lead lead : newLeads) {
-//            System.out.println(lead.getEmail() + " -> " + lead.getCreatedAt());
-//        }
-//
-//        // bob создан 1 день назад (самый новый) -> должен быть первым
-//        // john создан 5 дней назад -> должен быть вторым
-//        assertThat(newLeads.get(0).getEmail()).isEqualTo("bob@acme.com");
-//        assertThat(newLeads.get(1).getEmail()).isEqualTo("john@acme.com");
-//    }
 
     @Test
     void findByStatusInShouldReturnLeadsWithMultipleStatuses() {

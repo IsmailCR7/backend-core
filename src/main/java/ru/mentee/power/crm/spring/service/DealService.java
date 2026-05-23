@@ -1,12 +1,5 @@
 package ru.mentee.power.crm.spring.service;
 
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import ru.mentee.power.crm.model.Deal;
-import ru.mentee.power.crm.model.DealStatus;
-import ru.mentee.power.crm.repository.InMemoryDealRepository;
-import ru.mentee.power.crm.repository.LeadRepository;
-
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
@@ -14,26 +7,34 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import ru.mentee.power.crm.model.Deal;
+import ru.mentee.power.crm.model.DealStatus;
+import ru.mentee.power.crm.repository.DealRepository;
+import ru.mentee.power.crm.repository.LeadRepository;
+
 @Service
 @RequiredArgsConstructor
 public class DealService {
-    private final InMemoryDealRepository dealRepository;
+    private final DealRepository dealRepository;
     private final LeadRepository leadRepository;
 
-    public Deal convertLeadToDeal(UUID leadId, BigDecimal amount) {
+    public Deal convertLeadToDeal (UUID leadId, BigDecimal amount) {
         if (leadRepository.findById(leadId).isEmpty()) {
             throw new IllegalArgumentException("Lead not found: " + leadId);
-        }else {
+        } else {
             Deal deal = new Deal(leadId, amount);
             dealRepository.save(deal);
             return deal;
         }
     }
-    public Deal transitionDealStatus(UUID dealId, DealStatus newStatus) {
+
+    public Deal transitionDealStatus (UUID dealId, DealStatus newStatus) {
         Optional<Deal> deal = dealRepository.findById(dealId);
         if (deal.isEmpty()) {
-            throw  new IllegalArgumentException("Deal not found: " + dealId);
-        }else {
+            throw new IllegalArgumentException("Deal not found: " + dealId);
+        } else {
             deal.get().transitionTo(newStatus);
             dealRepository.save(deal.get());
             return deal.get();
@@ -45,9 +46,8 @@ public class DealService {
     }
 
     public Map<DealStatus, List<Deal>> getDealsByStatusForKanban() {
-        return  dealRepository.findAll().stream().
-                collect(Collectors.groupingBy(Deal ::getStatus));
+        return dealRepository.findAll().stream()
+                .collect(Collectors.groupingBy(Deal::getStatus));
     }
-
 }
 
