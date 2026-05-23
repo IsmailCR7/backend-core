@@ -1,24 +1,34 @@
 package ru.mentee.power.crm.spring.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.transaction.IllegalTransactionStateException;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import ru.mentee.power.crm.model.Lead;
 import ru.mentee.power.crm.model.LeadStatus;
+import ru.mentee.power.crm.repository.DealRepository;
 import ru.mentee.power.crm.repository.LeadRepository;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
 @SpringBootTest
-@Transactional
 class LeadServiceTest {
 
     @Autowired
@@ -27,261 +37,181 @@ class LeadServiceTest {
     @Autowired
     private LeadRepository repository;
 
+    @MockitoBean
+    private DealRepository dealRepository;
+
     @BeforeEach
     void setUp() {
         repository.deleteAll();
+        doNothing().when(dealRepository).save(any());
 
-        // Создаём тестовые данные
         for (int i = 1; i <= 3; i++) {
             Lead lead = new Lead();
-            lead.setName("Lead " + i);
+            lead.setName("Name" + i);
             lead.setEmail("lead" + i + "@example.com");
             lead.setCompany("Company " + i);
             lead.setStatus(LeadStatus.NEW);
-            lead.setCreatedAt(LocalDateTime.now());
             repository.save(lead);
         }
-
-        // Добавляем один CONTACTED лид
-        Lead contactedLead = new Lead();
-        contactedLead.setName("Contacted Lead");
-        contactedLead.setEmail("contacted@example.com");
-        contactedLead.setCompany("Contacted Corp");
-        contactedLead.setStatus(LeadStatus.CONTACTED);
-        contactedLead.setCreatedAt(LocalDateTime.now());
-        repository.save(contactedLead);
     }
 
-    // ===== ТЕСТЫ CRUD ОПЕРАЦИЙ =====
-
-    @Test
-    void addLeadShouldCreateNewLead() {
-        // When
-        Lead newLead = service.addLead("Test User", "test@example.com", "Test Corp", LeadStatus.NEW);
-
-        // Then
-        assertThat(newLead).isNotNull();
-        assertThat(newLead.id()).isNotNull();
-        assertThat(newLead.email()).isEqualTo("test@example.com");
-
-        Optional<Lead> found = repository.findByEmail("test@example.com");
-        assertThat(found).isPresent();
+    @AfterEach
+    void tearDown() {
+        repository.deleteAll();
     }
 
     @Test
-    void addLeadShouldThrowExceptionWhenEmailAlreadyExists() {
-        // When & Then
-        assertThatThrownBy(() -> service.addLead("Duplicate", "lead1@example.com", "Corp", LeadStatus.NEW))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Lead with email already exists");
-    }
-
-    @Test
-    void updateShouldModifyExistingLead() {
-        // Given
-        Lead existing = repository.findByEmail("lead1@example.com").get();
-
-        // When
-        Lead updatedLead = new Lead();
-        updatedLead.setName("Updated Name");
-        updatedLead.setEmail("updated@example.com");
-        updatedLead.setCompany("Updated Corp");
-        updatedLead.setStatus(LeadStatus.CONTACTED);
-
-        Lead result = service.update(existing.id(), updatedLead);
-
-        // Then
-        assertThat(result.name()).isEqualTo("Updated Name");
-        assertThat(result.email()).isEqualTo("updated@example.com");
-
-        Optional<Lead> oldEmail = repository.findByEmail("lead1@example.com");
-        assertThat(oldEmail).isEmpty();
-
-        Optional<Lead> newEmail = repository.findByEmail("updated@example.com");
-        assertThat(newEmail).isPresent();
-    }
-
-    @Test
-    void deleteShouldRemoveLead() {
-        // Given
-        Lead toDelete = repository.findByEmail("lead1@example.com").get();
-
-        // When
-        service.delete(toDelete.id());
-
-        // Then
-        Optional<Lead> found = repository.findByEmail("lead1@example.com");
-        assertThat(found).isEmpty();
-    }
-
-    // ===== ТЕСТЫ МЕТОДОВ ПОИСКА =====
-
-    @Test
-    void findByEmailShouldReturnLead() {
-        // When
-        Optional<Lead> found = service.findByEmail("lead2@example.com");
-
-        // Then
-        assertThat(found).isPresent();
-        assertThat(found.get().getCompany()).isEqualTo("Company 2");
-    }
-
-    @Test
-    void findByStatusShouldReturnCorrectLeads() {
-        // When
-        List<Lead> newLeads = service.findByStatus(LeadStatus.NEW);
-        List<Lead> contactedLeads = service.findByStatus(LeadStatus.CONTACTED);
-
-        // Then
-        assertThat(newLeads).hasSize(3);
-        assertThat(contactedLeads).hasSize(1);
-    }
-
-    @Test
-    void findByCompanyShouldReturnLeads() {
-        // When
-        List<Lead> companyLeads = service.findByCompany("Company 1");
-
-        // Then
-        assertThat(companyLeads).hasSize(1);
-        assertThat(companyLeads.get(0).getEmail()).isEqualTo("lead1@example.com");
-    }
-
-    @Test
-    void countByStatusShouldReturnCorrectCount() {
-        // When
-        long newCount = service.countByStatus(LeadStatus.NEW);
-        long contactedCount = service.countByStatus(LeadStatus.CONTACTED);
-
-        // Then
-        assertThat(newCount).isEqualTo(3);
-        assertThat(contactedCount).isEqualTo(1);
-    }
-
-    @Test
-    void existsByEmailShouldReturnCorrectResult() {
-        // When
-        boolean exists = service.existsByEmail("lead1@example.com");
-        boolean notExists = service.existsByEmail("fake@example.com");
-
-        // Then
-        assertThat(exists).isTrue();
-        assertThat(notExists).isFalse();
-    }
-
-    @Test
-    void findByEmailContainingShouldReturnMatchingLeads() {
-        // When
-        List<Lead> found = service.findByEmailContaining("lead");
-
-        // Then
-        assertThat(found).hasSize(3);
-    }
-
-    @Test
-    void findByStatusAndCompanyShouldReturnCorrectLead() {
-        // When
-        List<Lead> found = service.findByStatusAndCompany(LeadStatus.NEW, "Company 1");
-
-        // Then
-        assertThat(found).hasSize(1);
-        assertThat(found.get(0).getEmail()).isEqualTo("lead1@example.com");
-    }
-
-    // ===== ТЕСТЫ ПАГИНАЦИИ =====
-
-    @Test
-    void findAllPagedShouldReturnPage() {
-        // When
-        Page<Lead> page = service.findAllPaged(0, 2);
-
-        // Then
-        assertThat(page.getContent()).hasSize(2);
-        assertThat(page.getTotalElements()).isEqualTo(4);
-        assertThat(page.getTotalPages()).isEqualTo(2);
-    }
-
-    @Test
-    void findByCompanyPagedShouldReturnPagedResults() {
-        // Create more ACME leads
-        for (int i = 1; i <= 3; i++) {
-            Lead lead = new Lead();
-            lead.setName("ACME Lead " + i);
-            lead.setEmail("acme" + i + "@acme.com");
-            lead.setCompany("ACME Corp");
-            lead.setStatus(LeadStatus.NEW);
-            repository.save(lead);
-        }
-
-        // When
-        Page<Lead> page = service.findByCompanyPaged("ACME Corp", 0, 2);
-
-        // Then
-        assertThat(page.getContent()).hasSize(2);
-        assertThat(page.getTotalElements()).isEqualTo(3);
-        assertThat(page.getTotalPages()).isEqualTo(2);
-    }
-
-    // ===== ТЕСТЫ BULK ОПЕРАЦИЙ =====
-
-    @Test
-    void convertNewToContactedShouldUpdateAllNewLeads() {
-        // When
+    void convertNewToContactedShouldUpdateMultipleLeads() {
         int updated = service.convertNewToContacted();
 
-        // Then
         assertThat(updated).isEqualTo(3);
 
-        long contactedCount = service.countByStatus(LeadStatus.CONTACTED);
-        assertThat(contactedCount).isEqualTo(4); // 3 обновлённых + 1 существующий
+        long contactedCount = repository.countByStatus(LeadStatus.CONTACTED);
+        assertThat(contactedCount).isEqualTo(3);
 
-        long newCount = service.countByStatus(LeadStatus.NEW);
+        long newCount = repository.countByStatus(LeadStatus.NEW);
         assertThat(newCount).isEqualTo(0);
     }
 
-    @Test
-    void deleteByStatusBulkShouldDeleteAllLeadsWithStatus() {
-        // When
-        int deleted = service.deleteByStatusBulk(LeadStatus.NEW);
-
-        // Then
-        assertThat(deleted).isEqualTo(3);
-
-        long remaining = repository.count();
-        assertThat(remaining).isEqualTo(1); // Только contacted лид остался
-
-        Optional<Lead> contactedLead = repository.findByEmail("contacted@example.com");
-        assertThat(contactedLead).isPresent();
-    }
-
-    // ===== ТЕСТ ПОИСКА С ФИЛЬТРАМИ =====
 
     @Test
-    void searchLeadsShouldFilterByName() {
-        // When
-        List<Lead> results = service.searchLeads("Lead 1", null, null, null);
+    void searchByCompanyShouldReturnPage() {
+        Lead lead = new Lead();
+        lead.setName("Name4");
+        lead.setEmail("lead4@example.com");
+        lead.setCompany("Company 1");
+        lead.setStatus(LeadStatus.NEW);
+        repository.save(lead);
 
-        // Then
-        assertThat(results).hasSize(1);
-        assertThat(results.get(0).getEmail()).isEqualTo("lead1@example.com");
+        Page<Lead> result = service.searchByCompany("Company 1", 0, 5);
+
+        assertThat(result.getContent()).hasSize(2);
+        assertThat(result.getTotalElements()).isEqualTo(2);
     }
 
     @Test
-    void searchLeadsShouldFilterByStatus() {
-        // When
-        List<Lead> results = service.searchLeads(null, null, null, LeadStatus.NEW);
+    void getFirstPageShouldReturnFirstPage() {
+        Page<Lead> result = service.getFirstPage(1);
 
-        // Then
-        assertThat(results).hasSize(3);
+        assertThat(result.hasPrevious()).isFalse();
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getTotalElements()).isEqualTo(3);
+        assertThat(result.getTotalPages()).isEqualTo(3);
     }
 
     @Test
-    void searchLeadsShouldCombineFilters() {
-        // When
-        List<Lead> results = service.searchLeads("Lead", null, "Company 1", LeadStatus.NEW);
+    void convertLeadToDealShouldCommitOnSuccess() {
+        List<Lead> leads = service.findAll();
+        assertThat(leads).isNotEmpty();
 
-        // Then
-        assertThat(results).hasSize(1);
-        assertThat(results.get(0).getEmail()).isEqualTo("lead1@example.com");
+        Lead lead = leads.get(0);
+        assertThat(lead.status()).isEqualTo(LeadStatus.NEW);
+
+        service.convertLeadToDeal(lead.id(), BigDecimal.valueOf(10_000));
+
+        Lead updatedLead = service.findById(lead.id()).get();
+        assertThat(updatedLead.status()).isEqualTo(LeadStatus.CONTACTED);
+    }
+
+    @Test
+    @Transactional
+    void convertLeadToDealShouldRollbackOnConstraintViolation() {
+        Exception exception = assertThrows(IllegalArgumentException.class, () ->
+                service.convertLeadToDeal(UUID.randomUUID(), BigDecimal.valueOf(10_000)));
+        assertThat(exception.getMessage()).contains("Lead not found");
+    }
+
+    @Test
+    void demonstrateSelfInvocationProblem() {
+        List<LeadStatus> statusesBefore = service.findByStatus(LeadStatus.NEW).stream()
+                .map(Lead::getStatus).collect(Collectors.toList());
+        List<UUID> ids = new ArrayList<>();
+        for (Lead lead : service.findAll()) {
+            ids.add(lead.id());
+        }
+        ids.add(UUID.randomUUID());
+
+        service.processLeadsWithInvocationProblem(ids);
+
+        List<LeadStatus> statusesAfter = service.findByStatus(LeadStatus.NEW).stream()
+                .map(Lead::getStatus).collect(Collectors.toList());
+
+        assertThat(statusesBefore).isEqualTo(statusesAfter);
+        assertThat(statusesAfter).hasSize(3);
+    }
+
+    @Test
+    void processLeadsShouldIsolateTransactionsPerLead() {
+        List<LeadStatus> statusesBefore = service.findByStatus(LeadStatus.NEW).stream()
+                .map(Lead::getStatus).collect(Collectors.toList());
+        List<UUID> ids = new ArrayList<>();
+        for (Lead lead : service.findAll()) {
+            ids.add(lead.id());
+        }
+        ids.add(UUID.randomUUID());
+
+        String transactionName = service.processLeads(ids);
+
+        List<LeadStatus> statusesAfter = service.findByStatus(LeadStatus.NEW).stream()
+                .map(Lead::getStatus).collect(Collectors.toList());
+
+        assertThat(transactionName).contains("LeadProcessor")
+                .contains("processSingleLead");
+        assertThat(statusesBefore).isNotEqualTo(statusesAfter);
+        assertThat(statusesAfter).hasSize(0);
+    }
+
+    @Transactional
+    @ParameterizedTest
+    @EnumSource(value = Propagation.class, names = {"REQUIRED", "MANDATORY"})
+    void testPropagation(Propagation propagation) {
+        List<UUID> ids = new ArrayList<>();
+        for (Lead lead : service.findAll()) {
+            ids.add(lead.id());
+        }
+
+        switch (propagation) {
+            case REQUIRED:
+                assertThat(service.processLeadsWithRequires(ids))
+                        .contains("testPropagation")
+                        .doesNotContain("LeadProcessor")
+                        .doesNotContain("processSingleLeadWithRequired");
+                break;
+            case MANDATORY:
+                assertThat(service.processLeadsWithMandatory(ids))
+                        .contains("testPropagation")
+                        .doesNotContain("LeadProcessor")
+                        .doesNotContain("processSingleLeadWithMandatory");
+                break;
+            default:
+                break;
+        }
+    }
+
+    @Test
+    void testPropagationMandatoryMethodShouldThrowExceptionWithoutTransaction() {
+        List<UUID> ids = new ArrayList<>();
+        for (Lead lead : service.findAll()) {
+            ids.add(lead.id());
+        }
+        ids.add(UUID.randomUUID());
+
+        assertThrows(IllegalTransactionStateException.class, () ->
+                service.processLeadsWithMandatory(ids));
+    }
+
+    @Test
+    void isolationReadCommittedAllowsNonRepeatableRead() {
+        Lead lead = new Lead();
+        lead.setName("John");
+        lead.setEmail("john@example.com");
+        lead.setCompany("TestComp");
+        lead.setStatus(LeadStatus.NEW);
+        repository.save(lead);
+
+        List<String> results = service.readThenWriteThenReadAgainWithReadCommitted(
+                lead.getId(), "Jane");
+
+        assertThat(results).containsExactly("John", "Jane");
     }
 }

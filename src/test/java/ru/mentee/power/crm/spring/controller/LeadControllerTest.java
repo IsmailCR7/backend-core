@@ -36,8 +36,8 @@ class LeadControllerTest {
     @CsvSource({
             "NEW",
             "CONTACTED",
-            "QUALIFIED",
-            "LOST"
+            "QUALIFIED"
+
     })
     void shouldReturnHtmlTableWhenDoGetCalledWithParam(String status) throws Exception {
 

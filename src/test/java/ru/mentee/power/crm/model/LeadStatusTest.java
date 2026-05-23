@@ -8,13 +8,13 @@ class LeadStatusTest {
     @Test
     void testEnumValues() {
         // Проверяем количество значений
-        assertEquals(4, LeadStatus.values().length);
+        assertEquals(3, LeadStatus.values().length);
 
         // Проверяем наличие всех ожидаемых значений
         assertTrue(containsConstant(LeadStatus.NEW));
         assertTrue(containsConstant(LeadStatus.CONTACTED));
         assertTrue(containsConstant(LeadStatus.QUALIFIED));
-        assertTrue(containsConstant(LeadStatus.LOST));
+
 
     }
 
@@ -25,7 +25,7 @@ class LeadStatusTest {
         assertEquals(LeadStatus.NEW, values[0]);
         assertEquals(LeadStatus.CONTACTED, values[1]);
         assertEquals(LeadStatus.QUALIFIED, values[2]);
-        assertEquals(LeadStatus.LOST, values[3]);
+
     }
 
     @Test
@@ -34,7 +34,7 @@ class LeadStatusTest {
         assertEquals(LeadStatus.NEW, LeadStatus.valueOf("NEW"));
         assertEquals(LeadStatus.CONTACTED, LeadStatus.valueOf("CONTACTED"));
         assertEquals(LeadStatus.QUALIFIED, LeadStatus.valueOf("QUALIFIED"));
-        assertEquals(LeadStatus.LOST, LeadStatus.valueOf("LOST"));
+
 
     }
 
@@ -52,7 +52,7 @@ class LeadStatusTest {
         assertEquals("NEW", LeadStatus.NEW.toString());
         assertEquals("CONTACTED", LeadStatus.CONTACTED.toString());
         assertEquals("QUALIFIED", LeadStatus.QUALIFIED.toString());
-        assertEquals("LOST", LeadStatus.LOST.toString());
+
 
     }
 

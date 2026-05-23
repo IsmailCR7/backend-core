@@ -1,5 +1,9 @@
 package ru.mentee.power.crm.spring.controller;
 
+import java.math.BigDecimal;
+import java.util.Optional;
+import java.util.UUID;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
@@ -15,28 +19,27 @@ import ru.mentee.power.crm.model.Lead;
 import ru.mentee.power.crm.spring.service.DealService;
 import ru.mentee.power.crm.spring.service.LeadService;
 
-import java.math.BigDecimal;
-import java.util.Optional;
-import java.util.UUID;
-
 @Controller
 @RequestMapping("/deals")
 @RequiredArgsConstructor
 public class DealController {
     private final DealService dealService;
-    private final LeadService leadService;
+    private  final LeadService leadService;
 
     @GetMapping
-    public String listDeals(Model model) {
+    public String listDeals (Model model) {
         model.addAttribute("deals", dealService.getAllDeals());
         return "deals/list";
     }
 
+    //показать доску канбан
     @GetMapping("/kanban")
-    public String kanbanView(Model model) {
+    public String kanbanView (Model model) {
         model.addAttribute("dealsByStatus", dealService.getDealsByStatusForKanban());
         return "deals/kanban";
     }
+
+    //показать форму конвертации
     @GetMapping("/convert/{leadId}")
     public String showConvertForm (@PathVariable UUID leadId, Model model) {
         Optional<Lead> lead = leadService.findById(leadId);
@@ -62,6 +65,4 @@ public class DealController {
         dealService.transitionDealStatus(dealId, newStatus);
         return  "redirect:/deals/kanban";
     }
-
-
 }

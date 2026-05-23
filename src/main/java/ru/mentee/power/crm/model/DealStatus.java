@@ -9,7 +9,7 @@ public enum DealStatus {
     PROPOSAL_SENT, //отправлено комм. предложение
     NEGOTIATION, //переговоры
     WON, //выиграна
-    LOST; //проиграна
+    LOST; //проиграна/клиент ушел и т.д.
 
     private static final Map<DealStatus, Set<DealStatus>>
             VALID_TRANSITIONS = Map.of(
