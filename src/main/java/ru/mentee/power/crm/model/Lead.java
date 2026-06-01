@@ -12,9 +12,11 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -46,7 +48,12 @@ public  class Lead {
     @Enumerated(EnumType.STRING)
     private  @NotNull(message = "Указать статус обязательно") LeadStatus status;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Version
+    @Column(name = "version", nullable = false)
+    @Setter(AccessLevel.NONE)
+    private Long version;
+
+    @Column(name = "created_at", nullable = false, updatable = false, columnDefinition = "TIMESTAMP WITH TIME ZONE")
     private LocalDateTime createdAt;
 
     @PrePersist
