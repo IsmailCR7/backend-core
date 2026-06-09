@@ -17,6 +17,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.mentee.power.crm.model.Lead;
 import ru.mentee.power.crm.model.LeadStatus;
@@ -24,6 +25,7 @@ import ru.mentee.power.crm.spring.service.LeadService;
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@ActiveProfiles("test")
 class LeadControllerTest {
 
     @Autowired
@@ -37,7 +39,6 @@ class LeadControllerTest {
             "NEW",
             "CONTACTED",
             "QUALIFIED"
-
     })
     void shouldReturnHtmlTableWhenDoGetCalledWithParam(String status) throws Exception {
 
@@ -69,7 +70,7 @@ class LeadControllerTest {
     void shouldShowEditForm() throws Exception {
 
         Lead lead = service.addLead("Dexter", "test1@example.ru",
-                "TestCorp", LeadStatus.NEW);
+                null, LeadStatus.NEW);
 
         mockMvc.perform(get("/leads/" + lead.id() + "/edit"))
                 .andExpect(status().isOk())
@@ -91,7 +92,7 @@ class LeadControllerTest {
     @Test
     void shouldUpdateLead() throws Exception {
         Lead lead = service.addLead("Dexter", "old@example.ru",
-                "TestCorp", LeadStatus.NEW);
+                null, LeadStatus.NEW);
 
         mockMvc.perform(post("/leads/" + lead.id())
                         .param("name", "Joys")

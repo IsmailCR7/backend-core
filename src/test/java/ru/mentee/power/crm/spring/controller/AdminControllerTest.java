@@ -17,10 +17,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import ru.mentee.power.crm.model.Company;
 import ru.mentee.power.crm.model.Lead;
 import ru.mentee.power.crm.model.LeadStatus;
 import ru.mentee.power.crm.spring.service.LeadService;
-
 
 @WebMvcTest(AdminController.class)
 class AdminControllerTest {
@@ -33,15 +33,17 @@ class AdminControllerTest {
     @Test
     void shouldReturnHomePageWithCorrectLeadCount() throws Exception {
         List<Lead> leads = List.of(
-                new Lead(UUID.randomUUID(), "Anna", "anna@test.ru", "Corp1", LeadStatus.NEW),
-                new Lead(UUID.randomUUID(), "Bob", "bob@test.ru", "Corp2", LeadStatus.NEW)
+                new Lead(UUID.randomUUID(), "Anna", "anna@test.ru",
+                        new Company("Corp 1", "TestIndustry"), LeadStatus.NEW),
+                new Lead(UUID.randomUUID(), "Bob", "bob@test.ru",
+                        new Company("Corp 2", "TestIndustry"), LeadStatus.NEW)
         );
         when(leadService.findAll()).thenReturn(leads);
 
         mockMvc.perform(get("/admin"))
                 .andExpect(status().isOk())
-                .andExpect(content().string("Spring Boot CRM is running! " +
-                        "Admin controller is OK. Total leads: 2"));
+                .andExpect(content().string("Spring Boot CRM is running! "
+                        + "Admin controller is OK. Total leads: 2"));
 
         verify(leadService).findAll();
     }
@@ -56,19 +58,20 @@ class AdminControllerTest {
                 .andExpect(content().string("Data is added!"));
 
         verify(leadService, times(1)).addLead("Ivan",
-                "test1@example.ru", "FirstCorp", LeadStatus.NEW);
+                "test1@example.ru",  null, LeadStatus.NEW);
         verify(leadService, times(1)).addLead("Anastasiya",
-                "test2@example.ru", "SecondCorp", LeadStatus.NEW);
+                "test2@example.ru", null, LeadStatus.NEW);
         verify(leadService, times(1)).addLead("Konstantin",
-                "test3@example.ru", "ThirdCorp", LeadStatus.NEW);
+                "test3@example.ru", null, LeadStatus.NEW);
         verify(leadService, times(1)).addLead("Nataliya",
-                "test4@example.ru", "FourthCorp", LeadStatus.NEW);
+                "test4@example.ru", null, LeadStatus.NEW);
     }
 
     @Test
     void shouldNotAddTestDataWhenDatabaseAlreadyHasData() throws Exception {
         List<Lead> existingLeads = List.of(
-                new Lead(UUID.randomUUID(), "Ivan", "test1@example.ru", "FirstCorp", LeadStatus.NEW)
+                new Lead(UUID.randomUUID(), "Ivan", "test1@example.ru",
+                        new Company("Corp 1", "TestIndustry"), LeadStatus.NEW)
         );
         when(leadService.findAll()).thenReturn(existingLeads);
 
