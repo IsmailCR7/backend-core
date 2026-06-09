@@ -10,12 +10,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import ru.mentee.power.crm.model.Lead;
 import ru.mentee.power.crm.model.LeadStatus;
 import ru.mentee.power.crm.repository.LeadRepository;
 
 @SpringBootTest
-class IsolationTest {
+@ActiveProfiles("test")
+public class IsolationTest {
     @Autowired
     private LeadService leadService;
 
@@ -36,7 +38,7 @@ class IsolationTest {
         Lead lead = new Lead();
         lead.setName("John");
         lead.setEmail("john@test.ru");
-        lead.setCompany("Company");
+        lead.setCompany(null);
         lead.setStatus(LeadStatus.NEW);
         leadRepository.save(lead);
         UUID leadId = lead.getId();

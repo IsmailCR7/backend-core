@@ -11,7 +11,7 @@ import ru.mentee.power.crm.spring.service.LeadService;
 
 
 @SpringBootTest
-public class LeadServiceBeanTest {
+class LeadServiceBeanTest {
 
     @Autowired
     private ApplicationContext context;

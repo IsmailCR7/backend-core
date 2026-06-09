@@ -13,72 +13,45 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
+import ru.mentee.power.crm.model.Company;
 import ru.mentee.power.crm.model.Lead;
 import ru.mentee.power.crm.model.LeadStatus;
 
-@Repository
 public interface LeadRepository extends JpaRepository<Lead, UUID> {
 
-    // ===== 1. DERIVED METHODS (по имени метода) =====
-
-    // Точный поиск по email (уже есть)
     Optional<Lead> findByEmail(String email);
 
-    // Поиск по статусу (уже есть, но используй LeadStatus, а не String!)
     List<Lead> findByStatus(LeadStatus status);
 
-    // Поиск по компании
-    List<Lead> findByCompany(String company);
+    List<Lead> findByCompany(Company company);
 
-    // Подсчёт лидов по статусу
     long countByStatus(LeadStatus status);
 
-    // Проверка существования по email
     boolean existsByEmail(String email);
 
-    // Поиск по части email (LIKE)
-    List<Lead> findByEmailContaining(String emailPart);
-
-    // Поиск по статусу И компании
-    List<Lead> findByStatusAndCompany(LeadStatus status, String company);
-
-    // Поиск по статусу с сортировкой по дате создания (новые сверху)
-    List<Lead> findByStatusOrderByCreatedAtDesc(LeadStatus status);
-
-
-    // ===== 2. МЕТОДЫ С ПАГИНАЦИЕЙ =====
-
-    // Все лиды с пагинацией (переопределяем из JpaRepository)
-    Page<Lead> findAll(Pageable pageable);
-
-    // Поиск по статусу с пагинацией
-    Page<Lead> findByStatus(LeadStatus status, Pageable pageable);
-
-    // Поиск по компании с пагинацией
-    Page<Lead> findByCompany(String company, Pageable pageable);
-
-    // ===== 3. JPQL ЗАПРОСЫ =====
-
-    // Поиск по списку статусов (IN запрос)
+    // JPQL запросы (объектный язык)
     @Query("SELECT l FROM Lead l WHERE l.status IN :statuses")
     List<Lead> findByStatusIn(@Param("statuses") List<LeadStatus> statuses);
 
-    // Поиск лидов, созданных после определённой даты
     @Query("SELECT l FROM Lead l WHERE l.createdAt > :date")
     List<Lead> findCreatedAfter(@Param("date") LocalDateTime date);
 
-    // Поиск по компании с сортировкой в JPQL
     @Query("SELECT l FROM Lead l WHERE l.company = :company ORDER BY l.createdAt DESC")
     List<Lead> findByCompanyOrderedByDate(@Param("company") String company);
 
-    // JPQL с пагинацией
+    // Методы с пагинацией
+    Page<Lead> findAll(Pageable pageable);
+
+    Page<Lead> findByStatus(LeadStatus status, Pageable pageable);
+
+    Page<Lead> findByCompany(Company company, Pageable pageable);
+
+    Page<Lead> findByStatusAndCompany(LeadStatus status, Company company, Pageable pageable);
+
     @Query("SELECT l FROM Lead l WHERE l.status IN :statuses")
     Page<Lead> findByStatusInPaged(@Param("statuses") List<LeadStatus> statuses, Pageable pageable);
 
-    // ===== 4. BULK ОПЕРАЦИИ (@Modifying) =====
-
-    // Массовое обновление статуса
+    // Bulk операции
     @Modifying(clearAutomatically = true)
     @Query("UPDATE Lead l SET l.status = :newStatus WHERE l.status = :oldStatus")
     int updateStatusBulk(
@@ -86,11 +59,11 @@ public interface LeadRepository extends JpaRepository<Lead, UUID> {
             @Param("newStatus") LeadStatus newStatus
     );
 
-    // Массовое удаление по статусу
     @Modifying(clearAutomatically = true)
     @Query("DELETE FROM Lead l WHERE l.status = :status")
-    int deleteByStatusBulk(@Param("status") LeadStatus status);
-
+    int deleteByStatusBulk(
+            @Param("status") LeadStatus status
+    );
 
     //Native-запросы
     @Query(value = "SELECT * FROM leads WHERE email = ?1", nativeQuery = true)
@@ -108,5 +81,4 @@ public interface LeadRepository extends JpaRepository<Lead, UUID> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT l FROM Lead l WHERE l.email = :email")
     Optional<Lead> findByEmailForUpdate(@Param("email") String email);
-
 }

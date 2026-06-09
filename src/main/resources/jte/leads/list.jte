@@ -1,4 +1,5 @@
 @import java.util.List
+
 @import ru.mentee.power.crm.model.Lead
 @import ru.mentee.power.crm.model.LeadStatus
 
@@ -6,97 +7,119 @@
 @param LeadStatus status
 @param String name
 @param String email
-@param String company
+@param String companyName
 
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Lead List</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-100">
-<div class="container mx-auto p-6">
-    <div class="bg-white rounded-2xl shadow-xl p-6">
-        <h2 class="text-2xl font-bold mb-4 text-blue-700">Lead List</h2>
+@template.layout.main(content = @`
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-2xl font-bold mb-4">Lead List</h2>
 
-        <div class="mb-4">
-            <a href="/leads/new" class="bg-green-500 text-white px-3 py-2 rounded-lg hover:bg-green-600 transition duration-200 inline-block">
+        <div>
+            <a
+                    href="/leads/new"
+                    class="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600"
+            >
                 + Добавить лида
             </a>
         </div>
+        <br>
 
-        <!-- Search form -->
-        <form action="/leads" method="get" class="mb-4 p-4 rounded-xl bg-blue-50">
-            <div class="flex flex-wrap gap-3 items-end">
-                <label class="text-sm font-medium text-gray-700">
+        <div class="mb-4 flex gap-2 justify-between items-center">
+            <form action="/leads" method="get" class="px-4 py-2 rounded bg-blue-500">
+                <label for="name">
                     Name:
-                    <input type="text" name="name" value="${name != null ? name : ""}" class="rounded-lg border-gray-300">
+                    <input type="text" name="name" value="${name}">
                 </label>
-                <label class="text-sm font-medium text-gray-700">
+                <label for="email">
                     Email:
-                    <input type="text" name="email" value="${email != null ? email : ""}" class="rounded-lg border-gray-300">
+                    <input type="text" name="email" value="${email}">
                 </label>
-                <label class="text-sm font-medium text-gray-700">
+                <label for="company">
                     Company:
-                    <input type="text" name="company" value="${company != null ? company : ""}" class="rounded-lg border-gray-300">
+                    <input type="text" name="companyName" value="${companyName}">
                 </label>
-                <label class="text-sm font-medium text-gray-700">
-                    Status:
-                    <select name="status" class="rounded-lg border-gray-300">
-                        <option value="">Все статусы</option>
-                        <option value="NEW">Новый</option>
-                        <option value="CONTACTED">Связались</option>
-                        <option value="QUALIFIED">Квалифицированный</option>
+                <label for="status">
+                    Status
+                    <select name="status">
+                        @if(status == null)
+                            <option value="" selected></option>
+                        @else
+                            <option value=""></option>
+                        @endif
+
+                        @if(status == LeadStatus.NEW)
+                            <option value="NEW" selected>Новый</option>
+                        @else
+                            <option value="NEW">Новый</option>
+                        @endif
+
+                        @if(status == LeadStatus.CONTACTED)
+                            <option value="CONTACTED" selected>Связались</option>
+                        @else
+                            <option value="CONTACTED">Связались</option>
+                        @endif
+
+                        @if(status == LeadStatus.QUALIFIED)
+                            <option value="QUALIFIED" selected>Квалифицированный</option>
+                        @else
+                            <option value="QUALIFIED">Квалифицированный</option>
+                        @endif
                     </select>
                 </label>
-                <button type="submit" class="bg-blue-600 text-white rounded-lg px-4 py-1.5 hover:bg-blue-700 transition duration-200">
+                <button type="submit"
+                        class="bg-white rounded px-1 py-1 hover:bg-gray-200"
+                >
                     Поиск
                 </button>
-            </div>
-        </form>
-
-        <!-- Table -->
-        <div class="overflow-x-auto rounded-xl border border-gray-200">
-            <table class="min-w-full bg-white">
-                <thead class="bg-blue-700 text-white">
-                    <tr>
-                        <th class="px-4 py-3 text-left rounded-tl-xl">Name</th>
-                        <th class="px-4 py-3 text-left">Email</th>
-                        <th class="px-4 py-3 text-left">Company</th>
-                        <th class="px-4 py-3 text-left">Status</th>
-                        <th class="px-4 py-3 text-left rounded-tr-xl">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @for(var lead : leads)
-                        <tr class="border-t border-gray-100 hover:bg-gray-50 transition duration-150">
-                            <td class="px-4 py-3">${lead.name() != null ? lead.name() : ""}</td>
-                            <td class="px-4 py-3">${lead.email()}</td>
-                            <td class="px-4 py-3">${lead.company()}</td>
-                            <td class="px-4 py-3">
-                                @if(lead.status().name() == "NEW")
-                                    <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">Новый</span>
-                                @elseif(lead.status().name() == "CONTACTED")
-                                    <span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">Связались</span>
-                                @else
-                                    <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">Квалифицированный</span>
-                                @endif
-                            </td>
-                            <td class="px-4 py-3">
-                                <a href="/leads/${String.valueOf(lead.id())}/edit" class="text-blue-600 hover:text-blue-800 font-medium transition">Редактировать</a>
-                                <form action="/leads/${String.valueOf(lead.id())}/delete" method="post" class="inline ml-2"
-                                      onsubmit="return confirm('Удалить лида ${lead.email()}?')">
-                                    <button type="submit" class="bg-red-500 text-white px-3 py-1 rounded-lg hover:bg-red-600 transition duration-200 text-sm">
-                                        Удалить
-                                    </button>
-                                </form>
-                            </td>
-                        </tr>
-                    @endfor
-                </tbody>
-            </table>
+            </form>
         </div>
+        <table class="min-w-full bg-white border border-gray-200">
+            <thead class="bg-gray-100">
+            <tr>
+                <th class="px-4 py-2 text-left">Name</th>
+                <th class="px-4 py-2 text-left">Email</th>
+                <th class="px-4 py-2 text-left">Company</th>
+                <th class="px-4 py-2 text-left">Status</th>
+                <th class="px-4 py-2 text-left"></th>
+                <th class="px-4 py-2 text-left"></th>
+            </tr>
+            </thead>
+            <tbody>
+            @for(var lead : leads)
+                <tr class="border-t hover:bg-gray-50">
+                    <td class="px-4 py-2">${lead.name()}</td>
+                    <td class="px-4 py-2">${lead.email()}</td>
+                    <td class="px-4 py-2">
+                        ${lead.company() != null ? lead.company().getName() : "не указана"}
+                    </td>
+                    <td class="px-4 py-2">
+                            <span class="px-2 py-1 rounded text-sm bg-green-100 text-green-800">
+                                ${lead.status()}
+                            </span>
+                    </td>
+                    <td>
+                        <a
+                                href="/leads/${String.valueOf(lead.id())}/edit"
+                                class="text-blue-600 hover:underline"
+                        >
+                            Редактировать
+                        </a>
+                    </td>
+                    <td>
+                        <form action="/leads/${lead.id().toString()}/delete"
+                              method="post" class="inline"
+                              onclick="return confirm('Удалить лида c e-mail: ${lead.email()}?')"
+                        >
+                            <button
+                                    type="submit"
+                                    class="bg-red-600 text-white px-2 rounded hover:bg-red-700"
+                            >
+                                Удалить
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            @endfor
+            </tbody>
+        </table>
     </div>
-</div>
-</body>
-</html>
+`)
