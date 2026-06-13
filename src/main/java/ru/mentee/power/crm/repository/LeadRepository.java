@@ -37,7 +37,7 @@ public interface LeadRepository extends JpaRepository<Lead, UUID> {
     List<Lead> findCreatedAfter(@Param("date") LocalDateTime date);
 
     @Query("SELECT l FROM Lead l WHERE l.company = :company ORDER BY l.createdAt DESC")
-    List<Lead> findByCompanyOrderedByDate(@Param("company") String company);
+    List<Lead> findByCompanyOrderedByDate(@Param("company") Company company);
 
     // Методы с пагинацией
     Page<Lead> findAll(Pageable pageable);
