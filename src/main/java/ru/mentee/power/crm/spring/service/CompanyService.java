@@ -41,7 +41,7 @@ public class CompanyService {
 
     public Company addCompany(String name, String industry) {
         Optional<Company> existing = companyRepository.findByName(name);
-        if (existing.isPresent() && existing.get().getIndustry() == industry) {
+        if (existing.isPresent() && existing.get().getIndustry().equals(industry)) {
             throw new IllegalStateException("Such company already exists");
         }
         return companyRepository.save(new Company(name, industry));

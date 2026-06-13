@@ -48,6 +48,7 @@ public class LeadService {
         LOG.info("LeadService @PostConstruct init() called - Bean lifecycle phase");
     }
 
+    @Transactional
     public Lead addLead(String name, String email, Company company, LeadStatus status) {
 
         Optional<Lead> existing = leadRepository.findByEmail(email);
@@ -65,6 +66,7 @@ public class LeadService {
         return leadRepository.save(lead);
     }
 
+    @Transactional
     public Lead addLead(String email, Company company, LeadStatus status) {
 
         Optional<Lead> existing = leadRepository.findByEmail(email);
@@ -81,6 +83,7 @@ public class LeadService {
         return leadRepository.save(lead);
     }
 
+    @Transactional
     public Lead update(UUID id, Lead updatedLead) {
 
         Optional<Lead> existing = leadRepository.findById(id);
@@ -162,8 +165,7 @@ public class LeadService {
     @Transactional
     public int convertNewToContacted() {
         int updated = leadRepository.updateStatusBulk(LeadStatus.NEW, LeadStatus.CONTACTED);
-        //логи
-        System.out.printf("Converted %d leads from NEW to CONTACTED%n", updated);
+        LOG.info("Converted %d leads from NEW to CONTACTED%n", updated);
         return updated;
     }
 
@@ -189,7 +191,7 @@ public class LeadService {
                 transactionName = leadProcessor.processSingleLead(id);
             } catch (Exception e) {
                 // Перехват исключения
-                System.out.println("Failed to process lead: " + id);
+                LOG.info("Failed to process lead: " + id);
             }
         }
         return transactionName;
@@ -202,7 +204,7 @@ public class LeadService {
                 this.processSingleLead(id);
             } catch (Exception e) {
                 // Перехват исключения
-                System.out.println("Failed to process lead: " + id);
+                LOG.info("Failed to process lead: " + id);
             }
         }
     }
@@ -223,7 +225,7 @@ public class LeadService {
                 transactionName = leadProcessor.processSingleLeadWithRequired(id);
             } catch (Exception e) {
                 // Перехват исключения
-                System.out.println("Failed to process lead: " + id);
+                LOG.info("Failed to process lead: " + id);
             }
         }
 
@@ -237,7 +239,7 @@ public class LeadService {
                 transactionName = leadProcessor.processSingleLeadWithMandatory(id);
             } catch (IllegalArgumentException e) {
                 // Перехват исключения
-                System.out.println("Failed to process lead: " + id);
+                LOG.info("Failed to process lead: " + id);
             }
         }
 
