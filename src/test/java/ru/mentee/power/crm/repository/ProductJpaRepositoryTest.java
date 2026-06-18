@@ -38,7 +38,7 @@ class ProductJpaRepositoryTest {
     // ==================== ТЕСТ 1: Сохранение продукта ====================
 
     @Test
-    void shouldSaveAndFindProduct_whenValidData() {
+    void shouldSaveAndFindProductWhenValidData() {
         // Given
         Product product = new Product();
         product.setName("Консультация по архитектуре");
@@ -63,7 +63,7 @@ class ProductJpaRepositoryTest {
     // ==================== ТЕСТ 2: Поиск по SKU ====================
 
     @Test
-    void shouldFindProductBySku_whenProductExists() {
+    void shouldFindProductBySkuWhenProductExists() {
         // Given
         productRepository.save(testProduct);
 
@@ -77,7 +77,7 @@ class ProductJpaRepositoryTest {
     }
 
     @Test
-    void shouldReturnEmptyOptional_whenSkuNotFound() {
+    void shouldReturnEmptyOptionalWhenSkuNotFound() {
         // Given: нет продуктов с таким SKU
 
         // When
@@ -90,7 +90,7 @@ class ProductJpaRepositoryTest {
     // ==================== ТЕСТ 3: Поиск активных продуктов ====================
 
     @Test
-    void shouldFindActiveProducts_whenActiveTrue() {
+    void shouldFindActiveProductsWhenActiveTrue() {
         // Given
         Product active1 = new Product();
         active1.setName("Активный товар 1");
@@ -128,7 +128,7 @@ class ProductJpaRepositoryTest {
     // ==================== ТЕСТ 4: Уникальность SKU ====================
 
     @Test
-    void shouldThrowException_whenSkuNotUnique() {
+    void shouldThrowExceptionWhenSkuNotUnique() {
         // Given: продукт с SKU уже сохранён
         productRepository.save(testProduct);
         productRepository.flush(); // Принудительно отправляем в БД
@@ -150,7 +150,7 @@ class ProductJpaRepositoryTest {
     // ==================== ТЕСТ 5: Обновление продукта ====================
 
     @Test
-    void shouldUpdateProduct_whenProductExists() {
+    void shouldUpdateProductWhenProductExists() {
         // Given
         Product saved = productRepository.save(testProduct);
 
@@ -170,7 +170,7 @@ class ProductJpaRepositoryTest {
     // ==================== ТЕСТ 6: Удаление продукта ====================
 
     @Test
-    void shouldDeleteProduct_whenProductExists() {
+    void shouldDeleteProductWhenProductExists() {
         // Given
         Product saved = productRepository.save(testProduct);
         UUID id = saved.getId();
@@ -186,7 +186,7 @@ class ProductJpaRepositoryTest {
     // ==================== ТЕСТ 7: Поиск всех продуктов ====================
 
     @Test
-    void shouldFindAllProducts_whenMultipleProductsExist() {
+    void shouldFindAllProductsWhenMultipleProductsExist() {
         // Given
         Product product1 = new Product();
         product1.setName("Товар 1");
@@ -215,7 +215,7 @@ class ProductJpaRepositoryTest {
     // ==================== ТЕСТ 8: Активный по умолчанию ====================
 
     @Test
-    void shouldSetActiveTrue_whenNotSpecified() {
+    void shouldSetActiveTrueWhenNotSpecified() {
         // Given: создаём продукт без указания active
         Product product = new Product();
         product.setName("Товар без указания активности");
@@ -233,7 +233,7 @@ class ProductJpaRepositoryTest {
     // ==================== ТЕСТ 9: Продукт с null полями ====================
 
     @Test
-    void shouldThrowException_whenRequiredFieldIsNull() {
+    void shouldThrowExceptionWhenRequiredFieldIsNull() {
         // Given: продукт без имени (null)
         Product product = new Product();
         product.setName(null); // NOT NULL поле
