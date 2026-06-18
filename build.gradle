@@ -30,6 +30,7 @@ ext {
     validationApiVersion = '3.1.1'
     hibernateValidatorVersion = '9.1.0.Final'
     h2DataBaseVersion = '2.3.232'
+    liquibaseVersion = '4.25.0'
 
 }
 
@@ -87,13 +88,18 @@ dependencies {
     implementation "jakarta.validation:jakarta.validation-api:${validationApiVersion}"
     implementation "org.hibernate.validator:hibernate-validator:${hibernateValidatorVersion}"
 
-
-    // PostgreSQL JDBC Driver (для dev и production)
+    // PostgresSQL JDBC Driver (для dev и production)
     runtimeOnly 'org.postgresql:postgresql'
 
     // H2 Database (только для тестов)
     testRuntimeOnly "com.h2database:h2:${h2DataBaseVersion}"
     runtimeOnly "com.h2database:h2:${h2DataBaseVersion}" //для BootRun with H2
+
+    // Liquibase for DB migrations (Sprint 7, BCORE-32)
+    implementation "org.liquibase:liquibase-core:${liquibaseVersion}"
+
+    // Spring Data JPA (Sprint 7, BCORE-30)
+    implementation "org.springframework.boot:spring-boot-starter-data-jpa:${springBootVersion}"
 }
 
 jte {
