@@ -17,7 +17,7 @@ import ru.mentee.power.crm.repository.LeadRepository;
 
 @SpringBootTest
 @ActiveProfiles("test")
-public class IsolationTest {
+class IsolationTest {
     @Autowired
     private LeadService leadService;
 
