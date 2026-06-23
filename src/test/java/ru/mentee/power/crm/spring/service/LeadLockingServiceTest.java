@@ -22,7 +22,6 @@ import ru.mentee.power.crm.repository.LeadRepository;
 
 @SpringBootTest
 @ActiveProfiles("test")
-//deadlock-тест вынесен отдельно в LeadDedlockServiceTest
 class LeadLockingServiceTest {
 
     @Autowired
@@ -38,19 +37,16 @@ class LeadLockingServiceTest {
 
     @Test
     void shouldPreventLostUpdateWhenPessimisticLockUsed() throws Exception {
-        // Given: Lead с начальным статусом
         Lead lead = new Lead("Patrick", "concurrent@test.com", LeadStatus.NEW);
         lead = leadRepository.save(lead);
         UUID leadId = lead.getId();
 
-        // When: Два потока одновременно обновляют Lead с pessimistic lock
         ExecutorService executor = Executors.newFixedThreadPool(2);
-
         CountDownLatch startLatch = new CountDownLatch(1);
         CountDownLatch doneLatch = new CountDownLatch(2);
 
         Future<String> task1 = executor.submit(() -> {
-            startLatch.await(); // Синхронизируем старт
+            startLatch.await();
             Lead updated = leadLockingService.convertLeadToDealWithLock(leadId, "CONTACTED");
             doneLatch.countDown();
             return updated.getStatus().toString();
@@ -63,18 +59,16 @@ class LeadLockingServiceTest {
             return updated.getStatus().toString();
         });
 
-        startLatch.countDown(); // Запускаем оба потока одновременно
-        doneLatch.await(10, TimeUnit.SECONDS); // Ждём завершения
+        startLatch.countDown();
+        doneLatch.await(10, TimeUnit.SECONDS);
 
-        // Then: Оба обновления успешны, вторая транзакция ждала первую
         String status1 = task1.get();
         String status2 = task2.get();
 
         assertThat(status1).isIn("CONTACTED", "QUALIFIED");
         assertThat(status2).isIn("CONTACTED", "QUALIFIED");
-        assertThat(status1).isNotEqualTo(status2); // Разные статусы (не должны быть)
+        assertThat(status1).isNotEqualTo(status2);
 
-        // Финальный статус — последняя commit'нутая транзакция
         Lead finalLead = leadRepository.findById(leadId).orElseThrow();
         assertThat(finalLead.getStatus().toString()).isIn("CONTACTED", "QUALIFIED");
 
@@ -90,38 +84,66 @@ class LeadLockingServiceTest {
 
         // When: Два потока одновременно обновляют БЕЗ pessimistic lock
         ExecutorService executor = Executors.newFixedThreadPool(2);
-
         CountDownLatch startLatch = new CountDownLatch(1);
 
+        // Используем AtomicReference для хранения исключений
+        java.util.concurrent.atomic.AtomicReference<Exception> exception1 = new java.util.concurrent.atomic.AtomicReference<>();
+        java.util.concurrent.atomic.AtomicReference<Exception> exception2 = new java.util.concurrent.atomic.AtomicReference<>();
+
         Future<?> task1 = executor.submit(() -> {
-            startLatch.await();
-            leadLockingService.updateLeadStatusOptimistic(leadId, "CONTACTED");
+            try {
+                startLatch.await();
+                leadLockingService.updateLeadStatusOptimistic(leadId, "CONTACTED");
+            } catch (Exception e) {
+                exception1.set(e);
+            }
             return null;
         });
 
         Future<?> task2 = executor.submit(() -> {
-            startLatch.await();
-            Thread.sleep(50);
-            leadLockingService.updateLeadStatusOptimistic(leadId, "QUALIFIED");
+            try {
+                startLatch.await();
+                Thread.sleep(50); // Даем первому потоку начать
+                leadLockingService.updateLeadStatusOptimistic(leadId, "QUALIFIED");
+            } catch (Exception e) {
+                exception2.set(e);
+            }
             return null;
         });
 
         startLatch.countDown();
 
-        // Then: Одна транзакция успешна, вторая выбрасывает OptimisticLockException
-        boolean exceptionThrown = false;
-        try {
-            task1.get(5, TimeUnit.SECONDS);
-            task2.get(5, TimeUnit.SECONDS);
-        } catch (ExecutionException e) {
-            // Одна из транзакций должна выбросить OptimisticLockException
-            assertThat(e.getCause())
-                    .isInstanceOfAny(ObjectOptimisticLockingFailureException.class);
-            exceptionThrown = true;
+        // Ждем завершения задач
+        task1.get(5, TimeUnit.SECONDS);
+        task2.get(5, TimeUnit.SECONDS);
+
+        executor.shutdown();
+
+        // Then: Одно из исключений должно быть ObjectOptimisticLockingFailureException
+        boolean hasOptimisticLockException = false;
+
+        if (exception1.get() != null) {
+            Throwable cause = exception1.get();
+            // Проверяем, является ли исключение или его причина ObjectOptimisticLockingFailureException
+            if (cause instanceof ObjectOptimisticLockingFailureException) {
+                hasOptimisticLockException = true;
+            } else if (cause.getCause() instanceof ObjectOptimisticLockingFailureException) {
+                hasOptimisticLockException = true;
+            }
         }
 
-        assertThat(exceptionThrown).isTrue();
-        executor.shutdown();
-    }
+        if (exception2.get() != null && !hasOptimisticLockException) {
+            Throwable cause = exception2.get();
+            if (cause instanceof ObjectOptimisticLockingFailureException) {
+                hasOptimisticLockException = true;
+            } else if (cause.getCause() instanceof ObjectOptimisticLockingFailureException) {
+                hasOptimisticLockException = true;
+            }
+        }
 
+        assertThat(hasOptimisticLockException)
+                .as("Expected ObjectOptimisticLockingFailureException but got: %s",
+                        exception1.get() != null ? exception1.get().getClass().getSimpleName() : "null")
+                .isTrue();
+    }
 }
