@@ -28,7 +28,7 @@ import ru.mentee.power.crm.spring.service.CompanyService;
 import ru.mentee.power.crm.spring.service.LeadService;
 
 @WebMvcTest(LeadController.class)
-public class LeadControllerUnitTest {
+class LeadControllerUnitTest {
 
     @Autowired
     private MockMvc mockMvc;

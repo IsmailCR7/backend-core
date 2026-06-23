@@ -12,7 +12,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest
 @ActiveProfiles("test")
 @Transactional  // Добавляем транзакционность
-class DatabaseStructureTest {
+class DataBaseStructureTest {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;

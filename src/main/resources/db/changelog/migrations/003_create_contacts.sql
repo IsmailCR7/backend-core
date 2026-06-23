@@ -10,3 +10,4 @@ CREATE TABLE contacts (
     lead_id UUID REFERENCES leads(id),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+

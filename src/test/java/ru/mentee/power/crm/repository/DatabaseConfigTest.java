@@ -15,7 +15,7 @@ import ru.mentee.power.crm.Application;
 @DataJpaTest  // Вместо @SpringBootTest
 @ActiveProfiles("test")
 @ContextConfiguration(classes = Application.class)
-public class DatabaseConfigTest {
+class DatabaseConfigTest {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;

@@ -25,6 +25,7 @@ import ru.mentee.power.crm.model.Company;
 import ru.mentee.power.crm.model.Lead;
 import ru.mentee.power.crm.model.LeadStatus;
 import ru.mentee.power.crm.repository.CompanyRepository;
+import ru.mentee.power.crm.repository.DealRepository;
 import ru.mentee.power.crm.repository.LeadRepository;
 
 @SpringBootTest
@@ -40,9 +41,13 @@ class LeadServiceTest {
     @Autowired
     private CompanyRepository companyRepository;
 
-    @BeforeEach
+    @Autowired
+    private DealRepository dealRepository; // Добавляем DealRepository
 
+    @BeforeEach
     void setUp() {
+        // Очищаем в правильном порядке
+        dealRepository.deleteAll();
         repository.deleteAll();
         companyRepository.deleteAll();
 
@@ -60,8 +65,11 @@ class LeadServiceTest {
 
     @AfterEach
     void tearDown() {
-
+        // Сначала удаляем все Deal, чтобы не было нарушений внешнего ключа
+        dealRepository.deleteAll();
+        // Потом удаляем Leads
         repository.deleteAll();
+        // И только потом Companies
         companyRepository.deleteAll();
     }
 
